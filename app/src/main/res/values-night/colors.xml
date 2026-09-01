@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 夜间模式色板 -->
+    <!-- 注意：绿色主题恢复为原亮色渐变（不在此暗化 background/background_end），
+         因此这里不再覆盖 background 与 background_end，沿用日间原值。 -->
+
+    <!-- 表面/文本 -->
+    <color name="surface">#FF1A1A1A</color>
+    <color name="surface_light">#FF242424</color>
+    <color name="text_primary">#FFF0F0F0</color>
+    <color name="text_secondary">#FFB0B0B0</color>
+    <color name="text_hint">#FF888888</color>
+    <color name="lyric_normal">#FF888888</color>
+    <color name="lyric_highlight">#FF64B5F6</color>
+    <color name="divider">#FF2A2A2A</color>
+    <color name="progress_background">#FF2A2A2A</color>
+
+    <!-- 6 套主题色对：夜间沿用日间渐变（同绿色主题策略），不单独暗化 start/end -->
+    <!-- 真正的明暗差异由 surface/text_primary 等变量控制 -->
+
+    <!-- 播放页背景：夜间深灰米 -->
+    <color name="player_background">#FF121212</color>
+    <!-- BottomSheet / SideSheet 面板背景：夜间深灰 #252429 -->
+    <color name="bottom_sheet_bg">#FF252429</color>
+    <!-- 面板内文本/图标/分割线（夜间深底统一白字） -->
+    <color name="sheet_text_primary">#FFFFFFFF</color>
+    <color name="sheet_text_secondary">#FFD9D9D9</color>
+    <color name="sheet_icon_tint">#FFD9D9D9</color>
+    <color name="sheet_divider">#FF3E3E44</color>
+
+    <!-- 弹窗（AlertDialog）专用配色：夜间深底浅字 -->
+    <color name="dialog_bg">#FF2B2A30</color>
+    <color name="dialog_text_primary">#FFFFFFFF</color>
+    <color name="dialog_text_secondary">#B3FFFFFF</color>
+    <color name="dialog_accent">#FF7CC7B0</color>
+</resources>

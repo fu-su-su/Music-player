@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">音樂播放器</string>
+    <string name="import_music">匯入</string>
+    <string name="scan_device_music">掃描裝置音樂</string>
+    <string name="match_lyrics">自動匹配歌詞</string>
+    <string name="match_lyrics_hint">請選擇包含 .lrc 歌詞檔案的資料夾\n推薦路徑：內部儲存裝置/Music/歌詞\n（歌曲檔案目錄：內部儲存裝置/Music/歌，掃描裝置音樂已自動覆蓋）</string>
+    <string name="match_images">自動匹配圖片</string>
+    <string name="match_images_hint">請選擇包含圖片檔案的資料夾\n將依歌曲標題自動模糊匹配封面，並覆蓋已有封面\n推薦路徑：內部儲存裝置/Music/圖片</string>
+    <string name="ai_assistant">AI助手</string>
+    <string name="agent_welcome">你好，我是音樂助手～\n可以試試：\n· 播放周杰倫的歌\n· 暫停 / 下一首\n· 把這首歌改名為xxx\n· 現在播放的是什麼</string>
+    <string name="agent_input_hint">輸入指令，如：播放告白氣球</string>
+    <string name="agent_send">傳送</string>
+    <string name="agent_thinking">思考中…</string>
+    <string name="select_folder">選擇資料夾</string>
+    <string name="settings">設定</string>
+    <string name="sort_by_name">依名稱排序</string>
+    <string name="sort_by_artist">依藝術家排序</string>
+    <string name="sort_by_add_time">依加入時間排序</string>
+    <string name="associate_lyric">關聯歌詞</string>
+    <string name="associate_image">關聯圖片</string>
+    <string name="delete_song_title">刪除歌曲</string>
+    <string name="delete_song_message">確定要刪除 \"%1$s\" 嗎？\n關聯的音訊、歌詞、封面檔案也會被刪除。</string>
+    <string name="delete">刪除</string>
+    <string name="cancel">取消</string>
+    <string name="music_storage_location">音樂儲存位置</string>
+    <string name="open_music_folder">開啟音樂資料夾</string>
+    <string name="open_file_manager">開啟檔案管理</string>
+    <string name="copy_path">複製路徑</string>
+    <string name="path_copied">路徑已複製到剪貼簿</string>
+    <string name="no_file_manager">未找到檔案管理員，請手動複製路徑導航</string>
+    <string name="no_lyric">暫無歌詞</string>
+    <string name="play">播放</string>
+    <string name="pause">暫停</string>
+    <string name="previous">上一首</string>
+    <string name="next">下一首</string>
+    <string name="loop_order">順序播放</string>
+    <string name="loop_single">單曲循環</string>
+    <string name="loop_random">隨機播放</string>
+    <string name="select_audio_file">選擇音訊檔案</string>
+    <string name="select_lyric_file">選擇歌詞檔案</string>
+    <string name="select_image_file">選擇圖片檔案</string>
+    <string name="editor_by">Editor by @紤泉</string>
+    <string name="no_songs">暫無歌曲，請點擊匯入按鈕加入</string>
+    <string name="mini_player_title">正在播放</string>
+    <string name="duration_format">%d:%02d</string>
+
+    <!-- 第一批基礎架構 -->
+    <string name="search">搜尋</string>
+    <string name="search_hint">搜尋歌曲、藝術家</string>
+    <string name="no_search_result">未找到符合的歌曲</string>
+    <string name="search_feature_coming">搜尋功能將在後續版本實現</string>
+
+    <string name="settings_title">設定</string>
+    <string name="settings_ai_assistant">AI助手</string>
+    <string name="settings_import_music">匯入音樂</string>
+    <string name="settings_scan_music">掃描裝置音樂</string>
+    <string name="settings_match_lyrics">自動匹配歌詞</string>
+    <string name="settings_match_images">自動匹配圖片</string>
+    <string name="settings_sort">排序</string>
+    <string name="settings_theme_color">主題色</string>
+    <string name="settings_night_mode">夜間模式</string>
+    <string name="settings_sleep_timer">睡眠定時</string>
+    <string name="settings_custom_background">自訂播放頁背景</string>
+    <string name="settings_lyric_font_size">歌詞字號</string>
+    <string name="settings_language">語言</string>
+    <string name="settings_about">關於</string>
+
+    <string name="theme_green">薄荷綠</string>
+    <string name="theme_sakura">櫻粉</string>
+    <string name="theme_mint">薄荷</string>
+    <string name="theme_coral">珊瑚</string>
+    <string name="theme_sky">晴空</string>
+    <string name="theme_black">純黑</string>
+    <string name="theme_white">純白</string>
+
+    <string name="night_mode_follow_system">跟隨系統</string>
+    <string name="night_mode_day">日間模式</string>
+    <string name="night_mode_night">夜間模式</string>
+
+    <string name="lyric_font_small">小</string>
+    <string name="lyric_font_medium">中</string>
+    <string name="lyric_font_large">大</string>
+
+    <string name="sleep_timer_off">關閉</string>
+    <string name="sleep_timer_15">15 分鐘</string>
+    <string name="sleep_timer_30">30 分鐘</string>
+    <string name="sleep_timer_60">60 分鐘</string>
+    <string name="sleep_timer_finish_current">播完當前</string>
+
+    <string name="lang_zh_cn">簡體中文</string>
+    <string name="lang_zh_tw">繁體中文</string>
+    <string name="lang_en">English</string>
+    <string name="lang_ja">日本語</string>
+
+    <string name="coming_soon">該功能將在後續版本實現</string>
+    <string name="theme_applied">主題已套用</string>
+    <string name="version_format">版本 %1$s</string>
+
+    <!-- 權限引導頁 -->
+    <string name="welcome_subtitle">本地音樂播放 · AI 語音助手</string>
+    <string name="privacy_policy_title">隱私協議</string>
+    <string name="privacy_policy_content">感謝使用音樂播放器。本應用：\n· 音樂檔案儲存在應用私有目錄，僅本地儲存，不上傳伺服器\n· 需要讀取音訊權限以匯入歌曲\n· AI 助手需聯網呼叫雲端服務，僅處理您的文字指令\n\n我們不會收集與功能無關的個人資訊。</string>
+    <string name="agree_and_continue">同意並繼續</string>
+    <string name="disagree">不同意</string>
+    <string name="permission_rationale">需要音訊讀取權限才能匯入並播放您裝置中的歌曲</string>
+
+    <!-- 播放清單 -->
+    <string name="settings_my_playlists">我的歌單</string>
+    <string name="playlist_create">新建歌單</string>
+    <string name="playlist_rename">重新命名</string>
+    <string name="playlist_delete">刪除歌單</string>
+    <string name="playlist_add_songs">加入歌曲</string>
+    <string name="playlist_remove_song">移除</string>
+    <string name="playlist_empty">還沒有歌單，點擊右上角新建</string>
+    <string name="playlist_detail_empty">歌單為空，點擊右上角加入歌曲</string>
+    <string name="playlist_name_hint">輸入歌單名稱</string>
+    <string name="playlist_delete_confirm">確定要刪除歌單 \"%1$s\" 嗎？歌單內的歌曲不會被刪除。</string>
+    <string name="playlist_song_count">%1$d 首</string>
+    <string name="select_songs">選擇歌曲</string>
+    <string name="done">完成</string>
+
+    <!-- 睡眠定時 -->
+    <string name="sleep_off">關</string>
+    <string name="sleep_15_min">15 分鐘</string>
+    <string name="sleep_30_min">30 分鐘</string>
+    <string name="sleep_60_min">60 分鐘</string>
+    <string name="sleep_after_current">播完目前歌曲</string>
+    <string name="sleep_remaining_fmt">剩餘 %1$d 分鐘</string>
+
+    <!-- 自訂播放頁背景 -->
+    <string name="custom_bg_need_playing">請先播放歌曲，再設定背景</string>
+    <string name="custom_bg_pick">選擇背景圖片</string>
+    <string name="custom_bg_clear">清除自訂背景</string>
+    <string name="custom_bg_saved">背景已設定</string>
+    <string name="custom_bg_cleared">已清除自訂背景</string>
+    <string name="custom_bg_failed">背景設定失敗</string>
+</resources>

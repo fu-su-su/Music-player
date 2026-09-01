@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 页面文字颜色属性：默认跟随日/夜（text_primary），纯黑/纯白主题通过 overlay 主题反色 -->
+    <attr name="mpTextPrimary" format="color" />
+    <attr name="mpTextSecondary" format="color" />
+</resources>

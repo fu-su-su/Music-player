@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingBottom="@dimen/spacing_sm">
+
+    <TextView
+        android:id="@+id/userTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:background="@drawable/bg_chat_bubble"
+        android:gravity="end"
+        android:maxWidth="280dp"
+        android:padding="@dimen/spacing_md"
+        android:textColor="?attr/mpTextPrimary"
+        android:textSize="@dimen/text_normal"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/agentTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:background="@drawable/bg_chat_bubble"
+        android:maxWidth="280dp"
+        android:padding="@dimen/spacing_md"
+        android:textColor="?attr/mpTextPrimary"
+        android:textSize="@dimen/text_normal"
+        android:visibility="gone" />
+</FrameLayout>

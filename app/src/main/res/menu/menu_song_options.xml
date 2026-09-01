@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_associate_lyric"
+        android:title="@string/associate_lyric" />
+    <item
+        android:id="@+id/action_associate_image"
+        android:title="@string/associate_image" />
+</menu>

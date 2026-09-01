@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- 第一批：工具栏精简，仅保留 齿轮(设置入口) + 搜索 -->
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/settings"
+        android:icon="@android:drawable/ic_menu_preferences"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_search"
+        android:title="@string/search"
+        android:icon="@android:drawable/ic_menu_search"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="collapseActionView|ifRoom" />
+</menu>

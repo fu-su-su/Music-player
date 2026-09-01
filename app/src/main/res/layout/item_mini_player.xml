@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/miniPlayerCard"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/mini_player_height"
+    android:layout_margin="@dimen/spacing_sm"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardBackgroundColor="#40FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
+    app:strokeColor="#40FFFFFF"
+    app:strokeWidth="1dp"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/spacing_sm">
+
+        <ImageView
+            android:id="@+id/miniCoverImageView"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="@dimen/spacing_sm"
+            android:background="@color/surface_light"
+            android:contentDescription="封面"
+            android:scaleType="centerCrop" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/miniTitleTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_normal"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/miniArtistTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/mpTextSecondary"
+                android:textSize="@dimen/text_small" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/miniPlayPauseButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/play"
+            android:padding="@dimen/spacing_sm"
+            android:scaleType="centerInside"
+            app:srcCompat="@android:drawable/ic_media_play"
+            android:tint="@color/primary" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

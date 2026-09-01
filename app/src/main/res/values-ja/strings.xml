@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ミュージックプレーヤー</string>
+    <string name="import_music">インポート</string>
+    <string name="scan_device_music">デバイスの音楽をスキャン</string>
+    <string name="match_lyrics">歌詞を自動マッチ</string>
+    <string name="match_lyrics_hint">.lrc 歌詞ファイルを含むフォルダーを選択してください\n推奨パス：内部ストレージ/Music/lyrics\n（曲ファイルのディレクトリ：内部ストレージ/Music/songs、デバイス音楽スキャンで自動カバー済み）</string>
+    <string name="match_images">画像を自動マッチ</string>
+    <string name="match_images_hint">画像ファイルを含むフォルダーを選択してください\n曲タイトルで曖昧マッチし、既存カバーを上書きします\n推奨パス：内部ストレージ/Music/images</string>
+    <string name="ai_assistant">AIアシスタント</string>
+    <string name="agent_welcome">こんにちは、音楽アシスタントです〜\n試してみて：\n・周杰倫の曲を再生\n・一時停止 / 次の曲\n・この曲をxxxに改名\n・今かかっている曲は？</string>
+    <string name="agent_input_hint">コマンドを入力、例：告白気球を再生</string>
+    <string name="agent_send">送信</string>
+    <string name="agent_thinking">考え中…</string>
+    <string name="select_folder">フォルダーを選択</string>
+    <string name="settings">設定</string>
+    <string name="sort_by_name">名前順</string>
+    <string name="sort_by_artist">アーティスト順</string>
+    <string name="sort_by_add_time">追加日時順</string>
+    <string name="associate_lyric">歌詞を関連付け</string>
+    <string name="associate_image">画像を関連付け</string>
+    <string name="delete_song_title">曲を削除</string>
+    <string name="delete_song_message">「%1$s」を削除しますか？\n関連するオーディオ、歌詞、カバー画像も削除されます。</string>
+    <string name="delete">削除</string>
+    <string name="cancel">キャンセル</string>
+    <string name="music_storage_location">音楽の保存場所</string>
+    <string name="open_music_folder">音楽フォルダーを開く</string>
+    <string name="open_file_manager">ファイルマネージャーを開く</string>
+    <string name="copy_path">パスをコピー</string>
+    <string name="path_copied">パスをクリップボードにコピーしました</string>
+    <string name="no_file_manager">ファイルマネージャーが見つかりません、パスを手動でコピーして移動してください</string>
+    <string name="no_lyric">歌詞なし</string>
+    <string name="play">再生</string>
+    <string name="pause">一時停止</string>
+    <string name="previous">前の曲</string>
+    <string name="next">次の曲</string>
+    <string name="loop_order">順次再生</string>
+    <string name="loop_single">1曲リピート</string>
+    <string name="loop_random">ランダム再生</string>
+    <string name="select_audio_file">オーディオファイルを選択</string>
+    <string name="select_lyric_file">歌詞ファイルを選択</string>
+    <string name="select_image_file">画像ファイルを選択</string>
+    <string name="editor_by">Editor by @紤泉</string>
+    <string name="no_songs">曲がありません、インポートボタンをタップして追加してください</string>
+    <string name="mini_player_title">再生中</string>
+    <string name="duration_format">%d:%02d</string>
+
+    <!-- 第1弾基盤 -->
+    <string name="search">検索</string>
+    <string name="search_hint">曲、アーティストを検索</string>
+    <string name="no_search_result">一致する曲が見つかりません</string>
+    <string name="search_feature_coming">検索機能は後続バージョンで実装します</string>
+
+    <string name="settings_title">設定</string>
+    <string name="settings_ai_assistant">AIアシスタント</string>
+    <string name="settings_import_music">音楽をインポート</string>
+    <string name="settings_scan_music">デバイスの音楽をスキャン</string>
+    <string name="settings_match_lyrics">歌詞を自動マッチ</string>
+    <string name="settings_match_images">画像を自動マッチ</string>
+    <string name="settings_sort">並べ替え</string>
+    <string name="settings_theme_color">テーマカラー</string>
+    <string name="settings_night_mode">夜間モード</string>
+    <string name="settings_sleep_timer">スリープタイマー</string>
+    <string name="settings_custom_background">再生ページ背景をカスタマイズ</string>
+    <string name="settings_lyric_font_size">歌詞の文字サイズ</string>
+    <string name="settings_language">言語</string>
+    <string name="settings_about">について</string>
+
+    <string name="theme_green">ミントグリーン</string>
+    <string name="theme_sakura">桜ピンク</string>
+    <string name="theme_mint">ミント</string>
+    <string name="theme_coral">コーラル</string>
+    <string name="theme_sky">スカイブルー</string>
+    <string name="theme_black">ブラック</string>
+    <string name="theme_white">ホワイト</string>
+
+    <string name="night_mode_follow_system">システムに従う</string>
+    <string name="night_mode_day">日中モード</string>
+    <string name="night_mode_night">夜間モード</string>
+
+    <string name="lyric_font_small">小</string>
+    <string name="lyric_font_medium">中</string>
+    <string name="lyric_font_large">大</string>
+
+    <string name="sleep_timer_off">オフ</string>
+    <string name="sleep_timer_15">15 分</string>
+    <string name="sleep_timer_30">30 分</string>
+    <string name="sleep_timer_60">60 分</string>
+    <string name="sleep_timer_finish_current">現在の曲の後</string>
+
+    <string name="lang_zh_cn">简体中文</string>
+    <string name="lang_zh_tw">繁體中文</string>
+    <string name="lang_en">English</string>
+    <string name="lang_ja">日本語</string>
+
+    <string name="coming_soon">この機能は後続バージョンで実装します</string>
+    <string name="theme_applied">テーマを適用しました</string>
+    <string name="version_format">バージョン %1$s</string>
+
+    <!-- 権限ガイドページ -->
+    <string name="welcome_subtitle">ローカル音楽再生 · AI 音声アシスタント</string>
+    <string name="privacy_policy_title">プライバシーポリシー</string>
+    <string name="privacy_policy_content">ミュージックプレーヤーをご利用いただきありがとうございます。本アプリ：\n· 音楽ファイルはアプリのプライベートディレクトリに保存され、ローカルのみでサーバーへ送信しません\n· 楽曲のインポートに音声読み取り権限が必要です\n· AIアシスタントはクラウドサービスに接続し、テキストコマンドのみを処理します\n\n機能と無関係な個人情報は収集しません。</string>
+    <string name="agree_and_continue">同意して続行</string>
+    <string name="disagree">同意しない</string>
+    <string name="permission_rationale">デバイス内の楽曲をインポートして再生するには音声読み取り権限が必要です</string>
+
+    <!-- プレイリスト -->
+    <string name="settings_my_playlists">マイプレイリスト</string>
+    <string name="playlist_create">新規プレイリスト</string>
+    <string name="playlist_rename">名前変更</string>
+    <string name="playlist_delete">プレイリストを削除</string>
+    <string name="playlist_add_songs">曲を追加</string>
+    <string name="playlist_remove_song">削除</string>
+    <string name="playlist_empty">プレイリストがありません、右上をタップして作成</string>
+    <string name="playlist_detail_empty">プレイリストは空です、右上をタップして曲を追加</string>
+    <string name="playlist_name_hint">プレイリスト名を入力</string>
+    <string name="playlist_delete_confirm">プレイリスト「%1$s」を削除しますか？曲は削除されません。</string>
+    <string name="playlist_song_count">%1$d 曲</string>
+    <string name="select_songs">曲を選択</string>
+    <string name="done">完了</string>
+
+    <!-- スリープタイマー -->
+    <string name="sleep_off">オフ</string>
+    <string name="sleep_15_min">15分</string>
+    <string name="sleep_30_min">30分</string>
+    <string name="sleep_60_min">60分</string>
+    <string name="sleep_after_current">現在の曲の後</string>
+    <string name="sleep_remaining_fmt">残り %1$d 分</string>
+
+    <!-- 再生ページのカスタム背景 -->
+    <string name="custom_bg_need_playing">先に曲を再生してから背景を設定してください</string>
+    <string name="custom_bg_pick">背景画像を選択</string>
+    <string name="custom_bg_clear">カスタム背景をクリア</string>
+    <string name="custom_bg_saved">背景を設定しました</string>
+    <string name="custom_bg_cleared">カスタム背景をクリアしました</string>
+    <string name="custom_bg_failed">背景の設定に失敗しました</string>
+</resources>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.MusicPlayer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor" tools:targetApi="l">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <!-- 页面文字颜色：默认引用 text_primary/secondary（日夜自动切换），
+             纯黑/纯白主题由 overlay 主题覆盖实现文字反色 -->
+        <item name="mpTextPrimary">@color/text_primary</item>
+        <item name="mpTextSecondary">@color/text_secondary</item>
+        <!-- 弹窗配色与页面解耦：日间白底深字/夜间深底浅字，修复弹窗文字不可见 -->
+        <item name="alertDialogTheme">@style/Theme.MusicPlayer.AlertDialog</item>
+        <item name="materialAlertDialogTheme">@style/Theme.MusicPlayer.AlertDialog</item>
+    </style>
+
+    <!-- 全局 AlertDialog 主题：标题/正文/单选项/按钮颜色独立于页面渐变背景 -->
+    <style name="Theme.MusicPlayer.AlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="android:textColorPrimary">@color/dialog_text_primary</item>
+        <item name="android:textColorSecondary">@color/dialog_text_secondary</item>
+        <item name="android:textColor">@color/dialog_text_primary</item>
+        <item name="textColorAlertDialogListItem">@color/dialog_text_primary</item>
+        <item name="colorPrimary">@color/dialog_accent</item>
+        <item name="colorSecondary">@color/dialog_accent</item>
+    </style>
+
+    <!-- 纯黑主题 overlay：黑底 → 白字/浅字 + 浅色控件图标 -->
+    <style name="ThemeOverlay.MusicPlayer.OnBlack" parent="">
+        <item name="mpTextPrimary">#FFFFFFFF</item>
+        <item name="mpTextSecondary">#FFB3B3B3</item>
+        <item name="android:textColorPrimary">#FFFFFFFF</item>
+        <item name="android:textColorSecondary">#FFB3B3B3</item>
+        <item name="colorControlNormal">#FFFFFFFF</item>
+    </style>
+
+    <!-- 纯白主题 overlay：白底 → 黑字/深字 + 深色控件图标 -->
+    <style name="ThemeOverlay.MusicPlayer.OnWhite" parent="">
+        <item name="mpTextPrimary">#FF1B1B1B</item>
+        <item name="mpTextSecondary">#FF5A5A5A</item>
+        <item name="android:textColorPrimary">#FF1B1B1B</item>
+        <item name="android:textColorSecondary">#FF5A5A5A</item>
+        <item name="colorControlNormal">#FF333333</item>
+    </style>
+
+    <!-- PlayerActivity 专用主题：浅灰米色背景，无绿色（夜间自动切深色） -->
+    <style name="Theme.Player" parent="Theme.MusicPlayer">
+        <item name="android:windowBackground">@color/player_background</item>
+        <item name="android:statusBarColor" tools:targetApi="l">@color/player_background</item>
+        <item name="android:navigationBarColor">@color/player_background</item>
+    </style>
+
+    <!-- 圆角封面样式：用于歌曲列表的封面 ImageView -->
+    <style name="ShapeAppearance.RoundedCover" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <!-- 圆角胶囊样式：用于时长标签 -->
+    <style name="ShapeAppearance.DurationPill" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- 设置侧边面板：从左侧滑入/滑出 -->
+    <style name="SideSheetAnim" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_left</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_left</item>
+    </style>
+</resources>

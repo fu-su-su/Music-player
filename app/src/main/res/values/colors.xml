@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primary">#FF1E88E5</color>
+    <color name="primary_dark">#FF1565C0</color>
+    <color name="accent">#FF64B5F6</color>
+    <color name="background">#FF3A8679</color>
+    <color name="background_end">#FFBBE59C</color>
+    <color name="surface">#FF1E1E1E</color>
+    <color name="surface_light">#FF2A2A2A</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFB0B0B0</color>
+    <color name="text_hint">#FF757575</color>
+    <color name="lyric_normal">#FF888888</color>
+    <color name="lyric_highlight">#FF1E88E5</color>
+    <color name="divider">#FF333333</color>
+    <color name="progress_background">#FF333333</color>
+
+    <!-- ===== 5 套主题色对（start/end 渐变端点） ===== -->
+    <!-- 绿（默认主题）：直接复用原 bg_gradient.xml（background / background_end），不再单独定义色板 -->
+    <!-- 1. 樱粉 #ECA2AE → #F9E1E5 -->
+    <color name="theme_sakura_start">#FFECA2AE</color>
+    <color name="theme_sakura_end">#FFF9E1E5</color>
+    <!-- 2. 薄荷 #DCEDC2 → #A8E6CE -->
+    <color name="theme_mint_start">#FFDCEDC2</color>
+    <color name="theme_mint_end">#FFA8E6CE</color>
+    <!-- 3. 珊瑚 #FF8C94 → #FFAAA6 -->
+    <color name="theme_coral_start">#FFFF8C94</color>
+    <color name="theme_coral_end">#FFFFAAA6</color>
+    <!-- 4. 晴空 #A0B5E3 → #DBE3F5 -->
+    <color name="theme_sky_start">#FFA0B5E3</color>
+    <color name="theme_sky_end">#FFDBE3F5</color>
+    <!-- 5. 纯黑（微渐变） -->
+    <color name="theme_black_start">#FF000000</color>
+    <color name="theme_black_end">#FF1C1C1C</color>
+    <!-- 6. 纯白（微渐变） -->
+    <color name="theme_white_start">#FFFFFFFF</color>
+    <color name="theme_white_end">#FFE8E8E8</color>
+
+    <!-- 播放页背景（日间浅米色） -->
+    <color name="player_background">#FFE1E0DE</color>
+    <!-- BottomSheet/SideSheet 面板背景：日间白底 -->
+    <color name="bottom_sheet_bg">#FFFFFFFF</color>
+    <!-- 面板内文本/图标/分割线（日间白底用黑字） -->
+    <color name="sheet_text_primary">#FF1B1B1B</color>
+    <color name="sheet_text_secondary">#FF555555</color>
+    <color name="sheet_icon_tint">#FF555555</color>
+    <color name="sheet_divider">#FFE0E0E0</color>
+
+    <!-- 弹窗（AlertDialog）专用配色：日间白底深字/夜间深底浅字，与页面文字解耦 -->
+    <color name="dialog_bg">#FFFFFFFF</color>
+    <color name="dialog_text_primary">#DE1B1B1B</color>
+    <color name="dialog_text_secondary">#991B1B1B</color>
+    <color name="dialog_accent">#FF3A8679</color>
+</resources>

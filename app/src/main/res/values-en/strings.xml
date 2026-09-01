@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Music Player</string>
+    <string name="import_music">Import</string>
+    <string name="scan_device_music">Scan device music</string>
+    <string name="match_lyrics">Auto-match lyrics</string>
+    <string name="match_lyrics_hint">Please select a folder containing .lrc lyric files\nRecommended path: Internal storage/Music/lyrics\n(Song files directory: Internal storage/Music/songs, scanning device music already covers it)</string>
+    <string name="match_images">Auto-match images</string>
+    <string name="match_images_hint">Please select a folder containing image files\nCovers will be fuzzy-matched by song title and overwrite existing covers\nRecommended path: Internal storage/Music/images</string>
+    <string name="ai_assistant">AI Assistant</string>
+    <string name="agent_welcome">Hello, I\'m your music assistant~\nTry:\n· Play songs by Jay Chou\n· Pause / Next\n· Rename this song to xxx\n· What\'s playing now</string>
+    <string name="agent_input_hint">Enter a command, e.g.: Play Love Confession</string>
+    <string name="agent_send">Send</string>
+    <string name="agent_thinking">Thinking…</string>
+    <string name="select_folder">Select folder</string>
+    <string name="settings">Settings</string>
+    <string name="sort_by_name">Sort by name</string>
+    <string name="sort_by_artist">Sort by artist</string>
+    <string name="sort_by_add_time">Sort by added time</string>
+    <string name="associate_lyric">Associate lyric</string>
+    <string name="associate_image">Associate image</string>
+    <string name="delete_song_title">Delete song</string>
+    <string name="delete_song_message">Are you sure you want to delete \"%1$s\"?\nAssociated audio, lyrics, and cover files will also be deleted.</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="music_storage_location">Music storage location</string>
+    <string name="open_music_folder">Open music folder</string>
+    <string name="open_file_manager">Open file manager</string>
+    <string name="copy_path">Copy path</string>
+    <string name="path_copied">Path copied to clipboard</string>
+    <string name="no_file_manager">No file manager found, please copy the path manually</string>
+    <string name="no_lyric">No lyrics</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="previous">Previous</string>
+    <string name="next">Next</string>
+    <string name="loop_order">Order play</string>
+    <string name="loop_single">Single loop</string>
+    <string name="loop_random">Random play</string>
+    <string name="select_audio_file">Select audio file</string>
+    <string name="select_lyric_file">Select lyric file</string>
+    <string name="select_image_file">Select image file</string>
+    <string name="editor_by">Editor by @紤泉</string>
+    <string name="no_songs">No songs yet, tap the import button to add</string>
+    <string name="mini_player_title">Now playing</string>
+    <string name="duration_format">%d:%02d</string>
+
+    <!-- Batch 1 infrastructure -->
+    <string name="search">Search</string>
+    <string name="search_hint">Search songs, artists</string>
+    <string name="no_search_result">No matching songs found</string>
+    <string name="search_feature_coming">Search will be available in a later version</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_ai_assistant">AI Assistant</string>
+    <string name="settings_import_music">Import music</string>
+    <string name="settings_scan_music">Scan device music</string>
+    <string name="settings_match_lyrics">Auto-match lyrics</string>
+    <string name="settings_match_images">Auto-match images</string>
+    <string name="settings_sort">Sort</string>
+    <string name="settings_theme_color">Theme color</string>
+    <string name="settings_night_mode">Night mode</string>
+    <string name="settings_sleep_timer">Sleep timer</string>
+    <string name="settings_custom_background">Custom play page background</string>
+    <string name="settings_lyric_font_size">Lyric font size</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_about">About</string>
+
+    <string name="theme_green">Mint Green</string>
+    <string name="theme_sakura">Sakura</string>
+    <string name="theme_mint">Mint</string>
+    <string name="theme_coral">Coral</string>
+    <string name="theme_sky">Sky Blue</string>
+    <string name="theme_black">Black</string>
+    <string name="theme_white">White</string>
+
+    <string name="night_mode_follow_system">Follow system</string>
+    <string name="night_mode_day">Day mode</string>
+    <string name="night_mode_night">Night mode</string>
+
+    <string name="lyric_font_small">Small</string>
+    <string name="lyric_font_medium">Medium</string>
+    <string name="lyric_font_large">Large</string>
+
+    <string name="sleep_timer_off">Off</string>
+    <string name="sleep_timer_15">15 minutes</string>
+    <string name="sleep_timer_30">30 minutes</string>
+    <string name="sleep_timer_60">60 minutes</string>
+    <string name="sleep_timer_finish_current">After current song</string>
+
+    <string name="lang_zh_cn">简体中文</string>
+    <string name="lang_zh_tw">繁體中文</string>
+    <string name="lang_en">English</string>
+    <string name="lang_ja">日本語</string>
+
+    <string name="coming_soon">This feature will be available in a later version</string>
+    <string name="theme_applied">Theme applied</string>
+    <string name="version_format">Version %1$s</string>
+
+    <!-- Permission guide page -->
+    <string name="welcome_subtitle">Local music player · AI voice assistant</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_policy_content">Thanks for using Music Player. This app:\n· Music files are stored in the app\'s private directory, local only, never uploaded\n· Requires audio read permission to import songs\n· The AI assistant connects to a cloud service and only processes your text commands\n\nWe do not collect personal information unrelated to app features.</string>
+    <string name="agree_and_continue">Agree and continue</string>
+    <string name="disagree">Disagree</string>
+    <string name="permission_rationale">Audio read permission is required to import and play songs on your device</string>
+
+    <!-- Playlists -->
+    <string name="settings_my_playlists">My playlists</string>
+    <string name="playlist_create">New playlist</string>
+    <string name="playlist_rename">Rename</string>
+    <string name="playlist_delete">Delete playlist</string>
+    <string name="playlist_add_songs">Add songs</string>
+    <string name="playlist_remove_song">Remove</string>
+    <string name="playlist_empty">No playlists yet, tap top-right to create one</string>
+    <string name="playlist_detail_empty">Playlist is empty, tap top-right to add songs</string>
+    <string name="playlist_name_hint">Enter playlist name</string>
+    <string name="playlist_delete_confirm">Delete playlist \"%1$s\"? Songs in it will not be deleted.</string>
+    <string name="playlist_song_count">%1$d songs</string>
+    <string name="select_songs">Select songs</string>
+    <string name="done">Done</string>
+
+    <!-- Sleep timer -->
+    <string name="sleep_off">Off</string>
+    <string name="sleep_15_min">15 minutes</string>
+    <string name="sleep_30_min">30 minutes</string>
+    <string name="sleep_60_min">60 minutes</string>
+    <string name="sleep_after_current">After current song</string>
+    <string name="sleep_remaining_fmt">%1$d min left</string>
+
+    <!-- Custom play page background -->
+    <string name="custom_bg_need_playing">Play a song first to set its background</string>
+    <string name="custom_bg_pick">Choose background image</string>
+    <string name="custom_bg_clear">Clear custom background</string>
+    <string name="custom_bg_saved">Background set</string>
+    <string name="custom_bg_cleared">Custom background cleared</string>
+    <string name="custom_bg_failed">Failed to set background</string>
+</resources>
