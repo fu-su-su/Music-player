@@ -40,22 +40,24 @@ class AgentActivity : AppCompatActivity() {
         binding = ActivityAgentBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.root.setBackgroundResource(ThemeManager.getGradientDrawableRes(this))
-        ThemeManager.applySystemBars(this)
+        ThemeManager.applySystemBars(this, immersive = false)
 
         tools = AgentTools(application)
 
         setupToolbar()
         setupChat()
         setupInput()
+        applyEdgeInsets()
 
         appendAgentMessage(getString(R.string.agent_welcome))
     }
 
     private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.apply {
-            title = getString(R.string.ai_assistant)
             setDisplayHomeAsUpEnabled(true)
         }
+        binding.toolbar.setNavigationOnClickListener { finish() }
     }
 
     private fun setupChat() {
@@ -75,6 +77,32 @@ class AgentActivity : AppCompatActivity() {
             true
         }
     }
+
+    /**
+     * 非沉浸式模式下系统自动处理状态栏/导航栏/键盘的 insets，
+     * 只需给 RecyclerView 留足输入容器高度的底部 padding。
+     */
+    private fun applyEdgeInsets() {
+        try {
+            val spacing = resources.getDimensionPixelSize(R.dimen.spacing_sm)
+            val inputContainer = binding.root.getChildAt(2) as? View
+            binding.chatRecyclerView.post {
+                if (inputContainer != null) {
+                    val inputHeight = inputContainer.height.takeIf { it > 0 }
+                        ?: (84 * resources.displayMetrics.density).toInt()
+                    binding.chatRecyclerView.setPadding(
+                        binding.chatRecyclerView.paddingStart,
+                        binding.chatRecyclerView.paddingTop,
+                        binding.chatRecyclerView.paddingEnd,
+                        inputHeight + spacing
+                    )
+                }
+            }
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     private fun sendCurrentInput() {
         val text = binding.inputEditText.text?.toString()?.trim() ?: ""

@@ -37,6 +37,8 @@ class PlaylistActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         binding.toolbar.setNavigationOnClickListener { finish() }
 
+        applyEdgeInsets()
+
         adapter = PlaylistAdapter(
             onClick = { playlist -> openDetail(playlist) },
             onLongClick = { playlist -> showManageDialog(playlist) }
@@ -55,6 +57,28 @@ class PlaylistActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_playlist, menu)
         return true
+    }
+
+    private fun applyEdgeInsets() {
+        try {
+            val tb = binding.toolbar
+            val ab = (56 * resources.displayMetrics.density).toInt()
+            val rv = binding.playlistRecyclerView
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+                try {
+                    val sb = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars()).top
+                    val nb = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars()).bottom
+                    tb.setPadding(tb.paddingStart, sb, tb.paddingEnd, tb.paddingBottom)
+                    val lp = tb.layoutParams
+                    lp.height = ab + sb
+                    tb.layoutParams = lp
+                    rv.setPadding(rv.paddingStart, rv.paddingTop, rv.paddingEnd, nb)
+                } catch (_: Throwable) {
+                }
+                insets
+            }
+        } catch (_: Throwable) {
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

@@ -188,7 +188,11 @@ object ThemeManager {
      *
      * @param isPlayerActivity 是否是 PlayerActivity（使用独立的 player_background 而不是渐变）
      */
-    fun applySystemBars(activity: AppCompatActivity, isPlayerActivity: Boolean = false) {
+    fun applySystemBars(
+        activity: AppCompatActivity,
+        isPlayerActivity: Boolean = false,
+        immersive: Boolean = true
+    ) {
         val window: Window = activity.window
         val ctx = activity.applicationContext
         val sbColor: Int
@@ -202,10 +206,69 @@ object ThemeManager {
             sbColor = androidx.core.content.ContextCompat.getColor(ctx, theme.statusBarColorRes)
             nbColor = androidx.core.content.ContextCompat.getColor(ctx, theme.navigationBarColorRes)
         }
-        window.statusBarColor = sbColor
-        window.navigationBarColor = nbColor
-        // API 23 状态栏浅色图标 / API 26 导航栏浅色图标
-        setLightSystemBars(activity, isDark(sbColor), isDark(nbColor))
+
+        // 非沉浸式模式（如 AI 助手页）：直接设色，不延伸布局，
+        // 让系统的 adjustResize 自动处理键盘弹出的窗口缩放。
+        // 导航栏色用 mini_player_bg（与底部输入栏同色），消除色块断层。
+        if (!immersive) {
+            try {
+                val bottomBarColor = androidx.core.content.ContextCompat.getColor(
+                    ctx, R.color.mini_player_bg
+                )
+                if (isPlayerActivity) {
+                    window.statusBarColor = sbColor
+                    window.navigationBarColor = nbColor
+                } else {
+                    window.statusBarColor = sbColor
+                    window.navigationBarColor = bottomBarColor
+                }
+                setLightSystemBars(activity, isDark(sbColor), isDark(bottomBarColor))
+            } catch (_: Throwable) {
+            }
+            return
+        }
+
+        // 沉浸式模式：状态栏透明由渐变背景填充到刘海下；导航栏用 mini_player_bg
+        // 卡片/输入容器同色），从而 miniPlayer/输入栏 紧贴导航栏时连成一片纯色，
+        // 消除"主题渐变尾色≠卡片底"造成的"杂色断层"。
+        // OEM 定制系统或低版本机型上，延伸布局 flag 有时会让窗口机制崩溃（启动即闪退），
+        // 此时 catch 后立刻回退到"上下状态栏都直接填纯色"的保守模式，保证零崩溃。
+        try {
+            val bottomBarColor = androidx.core.content.ContextCompat.getColor(
+                ctx, R.color.mini_player_bg
+            )
+            // PlayerActivity 封面图专用：米色底状态栏/导航栏
+            if (isPlayerActivity) {
+                window.statusBarColor = sbColor
+                window.navigationBarColor = nbColor
+            } else {
+                window.statusBarColor = android.graphics.Color.TRANSPARENT
+                window.navigationBarColor = bottomBarColor
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.setDecorFitsSystemWindows(false)
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = (
+                    window.decorView.systemUiVisibility
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    )
+            }
+            // 系统栏图标深浅：导航栏用 mini_player_bg 判断（与卡片一致）；
+            // 状态栏透明：实际绘制在背景渐变顶上，用 startColor（sbColor）判断
+            val nbIsDark = isDark(bottomBarColor)
+            setLightSystemBars(activity, isDark(sbColor), nbIsDark)
+        } catch (_: Throwable) {
+            try {
+                window.statusBarColor = sbColor
+                window.navigationBarColor = nbColor
+                setLightSystemBars(activity, isDark(sbColor), isDark(nbColor))
+            } catch (_: Throwable) {
+                // 双重保护
+            }
+        }
     }
 
     private fun setLightSystemBars(
@@ -242,5 +305,18 @@ object ThemeManager {
         val b = Color.blue(color)
         val luminance = (0.299 * r + 0.587 * g + 0.114 * b)
         return luminance < 130.0
+    }
+
+    // ------------------------------ 系统栏尺寸 helpers（各页面预留 insets 用） ------------------------------
+
+    fun getStatusBarHeight(context: Context): Int {
+        val resId = context.resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (resId > 0) context.resources.getDimensionPixelSize(resId) else 0
+    }
+
+    fun getNavigationBarHeight(activity: AppCompatActivity): Int {
+        val decor = activity.window.decorView
+        val compat = androidx.core.view.ViewCompat.getRootWindowInsets(decor) ?: return 0
+        return compat.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars()).bottom
     }
 }

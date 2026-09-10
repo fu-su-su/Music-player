@@ -15,8 +15,7 @@ import java.net.URL
 object AgentService {
 
     private const val API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-    // 开源版不包含密钥，请在此处填入你自己的 API Key（智谱 AI 开放平台获取）
-    private const val API_KEY = "YOUR_API_KEY_HERE"
+    private const val API_KEY = "b8a65ce92121403ea3aebea418449122.zalDKiU3X7TC3OSe"
     private const val MODEL = "glm-4-flash"
 
     /** 模型返回的工具调用请求 */

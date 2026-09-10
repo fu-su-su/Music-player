@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFE1E0DE">
+    android:background="#FF000000">
 
-    <!-- 第1层：全屏图片背景，从顶部不透明到底部透明渐变 -->
+    <!-- 第1层：全屏图片背景 -->
     <com.musicplayer.app.ui.player.GradientMaskImageView
         android:id="@+id/coverImageView"
         android:layout_width="match_parent"
@@ -13,7 +13,7 @@
         android:contentDescription="封面"
         android:scaleType="centerCrop" />
 
-    <!-- 第2层：内容叠加层，按 10 单位坐标布局 -->
+    <!-- 第2层：内容叠加层 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -25,7 +25,7 @@
             android:layout_height="0dp"
             android:layout_weight="3" />
 
-        <!-- 3-4：歌曲信息（weight=1，10%，垂直居中） -->
+        <!-- 3-4：歌曲信息（weight=1，10%） -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -46,7 +46,7 @@
                 android:shadowDx="2"
                 android:shadowDy="2"
                 android:shadowRadius="6"
-                android:textColor="@color/white"
+                android:textColor="#FFFFFFFF"
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
@@ -62,17 +62,17 @@
                 android:shadowDx="2"
                 android:shadowDy="2"
                 android:shadowRadius="6"
-                android:textColor="@color/white"
+                android:textColor="#FFFFFFFF"
                 android:textSize="@dimen/text_large" />
         </LinearLayout>
 
-        <!-- 4-6：中部空白区（weight=2，20%） -->
+        <!-- 4-6：中部空白区 -->
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="2" />
 
-        <!-- 6-8：歌词区（weight=2，20%） -->
+        <!-- 6-8：歌词区 -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -88,18 +88,20 @@
                 android:paddingBottom="16dp" />
         </FrameLayout>
 
-        <!-- 8-9：底部空白区（weight=1，10%，图片接近完全透明） -->
+        <!-- 8-9：底部空白区 -->
         <View
+            android:id="@+id/bottomSpacerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- 9-10：底部控制区（weight=1，10%，白色25%透明） -->
+        <!-- 9-10：底部控制区（纯黑色） -->
         <LinearLayout
+            android:id="@+id/controlsPanel"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="#40FFFFFF"
+            android:background="#FF000000"
             android:gravity="center"
             android:orientation="vertical"
             android:paddingStart="@dimen/spacing_md"
@@ -107,7 +109,7 @@
             android:paddingTop="@dimen/spacing_xs"
             android:paddingBottom="@dimen/spacing_xs">
 
-            <!-- 进度条 -->
+            <!-- 进度条行：时间 + SeekBar + 收起按钮（右上角） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -119,7 +121,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0:00"
-                    android:textColor="#FF666666"
+                    android:textColor="#FFFFFFFF"
                     android:textSize="@dimen/text_xs" />
 
                 <SeekBar
@@ -129,21 +131,33 @@
                     android:layout_marginStart="@dimen/spacing_sm"
                     android:layout_marginEnd="@dimen/spacing_sm"
                     android:layout_weight="1"
-                    android:progressBackgroundTint="@color/progress_background"
-                    android:progressTint="#FF888888"
+                    android:progressBackgroundTint="#80FFFFFF"
+                    android:progressTint="#FFFFFFFF"
                     android:splitTrack="false"
-                    android:thumbTint="#FF888888" />
+                    android:thumbTint="#FFFFFFFF" />
 
                 <TextView
                     android:id="@+id/totalTimeTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0:00"
-                    android:textColor="#FF666666"
+                    android:textColor="#FFFFFFFF"
                     android:textSize="@dimen/text_xs" />
+
+                <ImageButton
+                    android:id="@+id/collapseButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="@dimen/spacing_sm"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="收起控件"
+                    android:padding="@dimen/spacing_xs"
+                    android:scaleType="centerInside"
+                    app:srcCompat="@drawable/ic_arrow_down"
+                    app:tint="#FFFFFFFF" />
             </LinearLayout>
 
-            <!-- 控制按钮 -->
+            <!-- 5个控制按钮均匀排列：播放模式 | 上一首 | 暂停 | 下一首 | 歌曲详情 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -153,63 +167,75 @@
 
                 <ImageButton
                     android:id="@+id/loopModeButton"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginEnd="@dimen/spacing_md"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
                     android:background="@null"
                     android:contentDescription="循环模式"
-                    android:padding="@dimen/spacing_xs"
                     android:scaleType="centerInside"
                     app:srcCompat="@drawable/ic_loop_order"
-                    app:tint="#FF888888" />
+                    app:tint="#FFFFFFFF" />
 
                 <ImageButton
                     android:id="@+id/previousButton"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
                     android:background="@null"
                     android:contentDescription="@string/previous"
-                    android:padding="@dimen/spacing_xs"
                     android:scaleType="centerInside"
-                    app:srcCompat="@android:drawable/ic_media_previous"
-                    app:tint="#FF888888" />
+                    app:srcCompat="@drawable/ic_previous"
+                    app:tint="#FFFFFFFF" />
 
                 <ImageButton
                     android:id="@+id/playPauseButton"
-                    android:layout_width="48dp"
+                    android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:layout_marginStart="@dimen/spacing_sm"
-                    android:layout_marginEnd="@dimen/spacing_sm"
+                    android:layout_weight="1"
                     android:background="@null"
                     android:contentDescription="@string/play"
-                    android:padding="@dimen/spacing_xs"
                     android:scaleType="centerInside"
-                    app:srcCompat="@android:drawable/ic_media_play"
-                    app:tint="#FF888888" />
+                    app:srcCompat="@drawable/ic_play"
+                    app:tint="#FFFFFFFF" />
 
                 <ImageButton
                     android:id="@+id/nextButton"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
                     android:background="@null"
                     android:contentDescription="@string/next"
-                    android:padding="@dimen/spacing_xs"
                     android:scaleType="centerInside"
-                    app:srcCompat="@android:drawable/ic_media_next"
-                    app:tint="#FF888888" />
+                    app:srcCompat="@drawable/ic_next"
+                    app:tint="#FFFFFFFF" />
 
                 <ImageButton
-                    android:id="@+id/backButton"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginStart="@dimen/spacing_md"
+                    android:id="@+id/songDetailsButton"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
                     android:background="@null"
-                    android:contentDescription="返回"
-                    android:padding="@dimen/spacing_xs"
+                    android:contentDescription="歌曲详情"
                     android:scaleType="centerInside"
-                    app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
-                    app:tint="#FF888888" />
+                    app:srcCompat="@drawable/ic_menu_lines"
+                    app:tint="#FFFFFFFF" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
+
+    <!-- 纯净模式右下角上箭头 -->
+    <ImageButton
+        android:id="@+id/expandButton"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="展开控件"
+        android:padding="@dimen/spacing_md"
+        android:scaleType="centerInside"
+        android:visibility="gone"
+        app:srcCompat="@drawable/ic_arrow_up"
+        app:tint="#80FFFFFF" />
 </FrameLayout>

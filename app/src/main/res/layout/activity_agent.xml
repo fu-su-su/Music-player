@@ -4,7 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_gradient"
+    android:fitsSystemWindows="true"
     android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:title="@string/ai_assistant"
+        app:titleTextColor="?attr/mpTextPrimary"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:elevation="0dp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecyclerView"
@@ -18,7 +29,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#40FFFFFF"
+        android:background="@color/mini_player_bg"
         android:gravity="bottom"
         android:orientation="horizontal"
         android:padding="@dimen/spacing_sm">

@@ -53,4 +53,11 @@
     <color name="dialog_text_primary">#DE1B1B1B</color>
     <color name="dialog_text_secondary">#991B1B1B</color>
     <color name="dialog_accent">#FF3A8679</color>
+
+    <!-- 迷你播放条卡片（主页底部）：日间浅色不透明 / 夜间深色不透明 -->
+    <color name="mini_player_bg">#FFF6F6F6</color>
+    <color name="mini_player_stroke">#FFD5D5D5</color>
+    <color name="mini_player_icon">#FF1B1B1B</color>  <!-- 日间卡片上：黑色（反色） -->
+    <color name="mini_player_text">#FF1B1B1B</color>
+    <color name="mini_player_text_secondary">#FF555555</color>
 </resources>

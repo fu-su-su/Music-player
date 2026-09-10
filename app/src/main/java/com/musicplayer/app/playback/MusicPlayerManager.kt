@@ -27,8 +27,22 @@ class MusicPlayerManager private constructor(private val context: Context) {
     private val repository = MusicRepository(context)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
+    /**
+     * 当前活跃的 MediaPlayer 实例。
+     * 每次 startPlaybackInner 会创建新的并赋值给此字段，旧的被 release。
+     */
+    @Volatile
     private var mediaPlayer: MediaPlayer? = null
     private var progressJob: Job? = null
+
+    /**
+     * 全局代币：每次 startPlaybackInner 递增。
+     * onPrepared / onCompletion / onError 回调携带的 token 与当前值不同时，
+     * 说明是旧 MediaPlayer 的延迟回调 → 直接丢弃，不执行任何操作。
+     * 这是防止"慢速连点也闪退"的核心机制——即使重入锁放开后旧的异步回调到来也不会崩溃。
+     */
+    @Volatile
+    private var playbackToken: Int = 0
 
     private val _playbackInfo = MutableStateFlow(PlaybackInfo())
     val playbackInfo: StateFlow<PlaybackInfo> = _playbackInfo.asStateFlow()
@@ -38,12 +52,10 @@ class MusicPlayerManager private constructor(private val context: Context) {
     // ---------- 睡眠定时 ----------
     private var sleepTimerJob: Job? = null
     private val _sleepTimerRemaining = MutableStateFlow<Long?>(null)
-
-    /** 睡眠定时剩余毫秒；null 表示未开启。每秒更新，供设置面板显示。 */
     val sleepTimerRemaining: StateFlow<Long?> = _sleepTimerRemaining.asStateFlow()
     private var sleepAfterCurrent = false
 
-    // ---------- 音频焦点：来电/其他音频抢占 ----------
+    // ---------- 音频焦点 ----------
     private val audioManager =
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -51,13 +63,9 @@ class MusicPlayerManager private constructor(private val context: Context) {
 
     private val focusListener = AudioManager.OnAudioFocusChangeListener { focus ->
         when (focus) {
-            AudioManager.AUDIOFOCUS_LOSS -> {
-                // 永久失去焦点：停止播放并放弃
-                stop()
-            }
+            AudioManager.AUDIOFOCUS_LOSS -> { stop() }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                // 来电等短暂抢占：暂停，待恢复
                 if (_playbackInfo.value.state == PlaybackState.PLAYING) {
                     hadAudioFocusBeforeTransientLoss = true
                     pause()
@@ -72,7 +80,6 @@ class MusicPlayerManager private constructor(private val context: Context) {
         }
     }
 
-    /** 请求音频焦点，返回是否成功。 */
     private fun requestAudioFocus(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
@@ -106,7 +113,6 @@ class MusicPlayerManager private constructor(private val context: Context) {
         }
     }
 
-    /** 启动媒体前台服务（通知栏/锁屏控制）。 */
     private fun startPlaybackService() {
         ContextCompat.startForegroundService(
             context, Intent(context, MusicPlaybackService::class.java)
@@ -136,10 +142,6 @@ class MusicPlayerManager private constructor(private val context: Context) {
         return playlist.find { it.id == id }
     }
 
-    /**
-     * 更新某歌曲在内存播放队列中的自定义背景路径（与 DB 更新配套调用），
-     * 使 getCurrentSong() 立即返回最新值，播放页据此切换背景。
-     */
     fun updateSongCustomBackground(songId: Long, path: String?) {
         val index = playlist.indexOfFirst { it.id == songId }
         if (index == -1) return
@@ -150,23 +152,22 @@ class MusicPlayerManager private constructor(private val context: Context) {
 
     fun getPlaylist(): List<Song> = playlist
 
+    // ================================================================
+    //  公开 API
+    // ================================================================
+
     fun playSong(songId: Long) {
         val index = playlist.indexOfFirst { it.id == songId }
         if (index == -1) {
-            // 不在播放列表中，尝试刷新
             refreshPlaylist()
             val newIndex = playlist.indexOfFirst { it.id == songId }
             if (newIndex == -1) return
-            startPlayback(newIndex)
+            startPlaybackInner(newIndex)
         } else {
-            startPlayback(index)
+            startPlaybackInner(index)
         }
     }
 
-    /**
-     * 以指定歌曲列表作为播放队列播放（用于自定义歌单）。
-     * 临时替换内部 playlist，调用 [refreshPlaylist] 可恢复全量队列。
-     */
     fun playPlaylist(songs: List<Song>, startIndex: Int = 0) {
         if (songs.isEmpty()) return
         val index = startIndex.coerceIn(0, songs.lastIndex)
@@ -174,15 +175,114 @@ class MusicPlayerManager private constructor(private val context: Context) {
         _playbackInfo.value = _playbackInfo.value.copy(
             playlist = playlist.map { it.id }
         )
-        startPlayback(index)
+        startPlaybackInner(index)
     }
 
-    private fun startPlayback(index: Int) {
-        if (index < 0 || index >= playlist.size) return
-        val song = playlist[index]
+    fun play() {
+        val currentInfo = _playbackInfo.value
+        when (currentInfo.state) {
+            PlaybackState.PAUSED -> {
+                try {
+                    mediaPlayer?.let { mp ->
+                        mp.start()
+                        _playbackInfo.value = _playbackInfo.value.copy(state = PlaybackState.PLAYING)
+                        startProgressTracking()
+                    }
+                } catch (_: Exception) {
+                    if (currentInfo.currentIndex in playlist.indices) {
+                        startPlaybackInner(currentInfo.currentIndex)
+                    }
+                }
+            }
+            PlaybackState.IDLE, PlaybackState.STOPPED,
+            PlaybackState.COMPLETED, PlaybackState.ERROR -> {
+                if (playlist.isEmpty()) return
+                val idx = if (currentInfo.currentIndex in playlist.indices)
+                    currentInfo.currentIndex else 0
+                startPlaybackInner(idx)
+            }
+            else -> { /* PLAYING 等状态不处理 */ }
+        }
+    }
 
-        stopInternal()
-        // 请求音频焦点
+    fun pause() {
+        if (_playbackInfo.value.state == PlaybackState.PLAYING) {
+            try {
+                mediaPlayer?.pause()
+                _playbackInfo.value = _playbackInfo.value.copy(state = PlaybackState.PAUSED)
+                stopProgressTracking()
+            } catch (_: Exception) { }
+        }
+    }
+
+    fun togglePlayPause() {
+        if (_playbackInfo.value.state == PlaybackState.PLAYING) pause() else play()
+    }
+
+    fun next() {
+        if (playlist.isEmpty()) return
+        val currentInfo = _playbackInfo.value
+        val nextIndex = if (currentInfo.loopMode == LoopMode.RANDOM) {
+            if (playlist.size > 1) {
+                var r: Int
+                do { r = Random.nextInt(playlist.size) } while (r == currentInfo.currentIndex)
+                r
+            } else 0
+        } else {
+            val ni = currentInfo.currentIndex + 1
+            if (ni >= playlist.size) 0 else ni   // 顺序末尾循环到第 0 首
+        }
+        startPlaybackInner(nextIndex)
+    }
+
+    fun previous() {
+        if (playlist.isEmpty()) return
+        val currentInfo = _playbackInfo.value
+        val prevIndex = if (currentInfo.currentPosition > 3000) {
+            currentInfo.currentIndex      // 超过3秒回到当前歌曲开头
+        } else {
+            val pi = currentInfo.currentIndex - 1
+            if (pi < 0) playlist.lastIndex else pi
+        }
+        startPlaybackInner(prevIndex)
+    }
+
+    fun seekTo(position: Long) {
+        try {
+            mediaPlayer?.seekTo(position.toInt())
+        } catch (_: Exception) { }
+        _playbackInfo.value = _playbackInfo.value.copy(currentPosition = position)
+    }
+
+    fun setLoopMode(mode: LoopMode) {
+        _playbackInfo.value = _playbackInfo.value.copy(loopMode = mode)
+    }
+
+    fun toggleLoopMode() {
+        setLoopMode(_playbackInfo.value.loopMode.next())
+    }
+
+    // ================================================================
+    //  核心播放逻辑（重写）
+    // ================================================================
+
+    /**
+     * 内部播放启动。使用代币机制保证：
+     * - 旧 MediaPlayer 的 onPrepared/onCompletion/onError 回调到来时，
+     *   代币不匹配 → 回调被丢弃，不会对已释放的 player 执行操作。
+     * - 无论慢速还是快速点击，都不会崩溃。
+     */
+    private fun startPlaybackInner(index: Int) {
+        if (index !in playlist.indices) return
+
+        // 1. 递增代币 —— 旧的异步回调此后全部失效
+        val myToken = ++playbackToken
+
+        // 2. 释放旧 MediaPlayer（安全释放，吞掉所有异常）
+        releasePlayerSafely()
+
+        // 3. 更新状态
+        val song = playlist[index]
         requestAudioFocus()
 
         _playbackInfo.value = _playbackInfo.value.copy(
@@ -196,11 +296,11 @@ class MusicPlayerManager private constructor(private val context: Context) {
             state = PlaybackState.IDLE
         )
 
-        // 启动前台服务（通知栏/锁屏控制），此时 playbackInfo 已含新歌曲信息
         startPlaybackService()
 
+        // 4. 创建新 MediaPlayer
         try {
-            mediaPlayer = MediaPlayer().apply {
+            val mp = MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -208,35 +308,65 @@ class MusicPlayerManager private constructor(private val context: Context) {
                         .build()
                 )
                 setDataSource(song.path)
-                setOnPreparedListener {
-                    _playbackInfo.value = _playbackInfo.value.copy(
-                        duration = it.duration.toLong(),
-                        state = PlaybackState.PLAYING
-                    )
-                    it.start()
-                    startProgressTracking()
+
+                setOnPreparedListener { player ->
+                    // 代币不匹配 = 这是旧 MediaPlayer 的延迟回调 → 丢弃
+                    if (myToken != playbackToken) {
+                        try { player.release() } catch (_: Exception) { }
+                        return@setOnPreparedListener
+                    }
+                    try {
+                        _playbackInfo.value = _playbackInfo.value.copy(
+                            duration = player.duration.toLong(),
+                            state = PlaybackState.PLAYING
+                        )
+                        player.start()
+                        startProgressTracking()
+                    } catch (_: Exception) {
+                        _playbackInfo.value = _playbackInfo.value.copy(state = PlaybackState.ERROR)
+                    }
                 }
+
                 setOnCompletionListener {
+                    if (myToken != playbackToken) return@setOnCompletionListener
                     onSongCompleted()
                 }
-                setOnErrorListener { _, _, _ ->
-                    _playbackInfo.value = _playbackInfo.value.copy(
-                        state = PlaybackState.ERROR
-                    )
+
+                setOnErrorListener { player, _, _ ->
+                    if (myToken != playbackToken) {
+                        try { player.release() } catch (_: Exception) { }
+                        return@setOnErrorListener true
+                    }
+                    _playbackInfo.value = _playbackInfo.value.copy(state = PlaybackState.ERROR)
+                    try { player.release() } catch (_: Exception) { }
+                    mediaPlayer = null
                     true
                 }
+
                 prepareAsync()
             }
+            mediaPlayer = mp
         } catch (e: Exception) {
             e.printStackTrace()
-            _playbackInfo.value = _playbackInfo.value.copy(
-                state = PlaybackState.ERROR
-            )
+            _playbackInfo.value = _playbackInfo.value.copy(state = PlaybackState.ERROR)
+        }
+    }
+
+    /**
+     * 安全释放 MediaPlayer：吞掉 stop/release 的所有异常，
+     * 确保不会因为 MediaPlayer 状态不合法而崩溃。
+     */
+    private fun releasePlayerSafely() {
+        stopProgressTracking()
+        val mp = mediaPlayer
+        mediaPlayer = null
+        if (mp != null) {
+            try { if (mp.isPlaying) mp.stop() } catch (_: Exception) { }
+            try { mp.release() } catch (_: Exception) { }
         }
     }
 
     private fun onSongCompleted() {
-        // 睡眠定时"播完当前"：无论循环模式，本曲结束后暂停并清除标志
         if (sleepAfterCurrent) {
             sleepAfterCurrent = false
             pause()
@@ -245,121 +375,61 @@ class MusicPlayerManager private constructor(private val context: Context) {
         val currentInfo = _playbackInfo.value
         when (currentInfo.loopMode) {
             LoopMode.SINGLE -> {
-                // 单曲循环：重新播放当前
-                seekTo(0L)
-                play()
+                // 单曲循环：从头播放当前歌曲（用代币机制重新启动）
+                startPlaybackInner(currentInfo.currentIndex)
             }
             LoopMode.RANDOM -> {
-                // 随机：随机选择一首
                 if (playlist.isNotEmpty()) {
-                    val randomIndex = Random.nextInt(playlist.size)
-                    startPlayback(randomIndex)
+                    val randomIndex = if (playlist.size > 1) {
+                        var r: Int
+                        do { r = Random.nextInt(playlist.size) } while (r == currentInfo.currentIndex)
+                        r
+                    } else 0
+                    startPlaybackInner(randomIndex)
                 }
             }
             LoopMode.ORDER -> {
-                // 顺序：播放下一首
                 val nextIndex = currentInfo.currentIndex + 1
                 if (nextIndex < playlist.size) {
-                    startPlayback(nextIndex)
+                    startPlaybackInner(nextIndex)
                 } else {
-                    // 播放完了
                     _playbackInfo.value = _playbackInfo.value.copy(
                         state = PlaybackState.COMPLETED,
                         currentPosition = 0L
                     )
-                    stopProgressTracking()
                 }
             }
         }
     }
 
-    fun play() {
-        val currentInfo = _playbackInfo.value
-        if (currentInfo.state == PlaybackState.PAUSED) {
-            mediaPlayer?.start()
-            _playbackInfo.value = _playbackInfo.value.copy(
-                state = PlaybackState.PLAYING
-            )
-            startProgressTracking()
-        } else if (currentInfo.state == PlaybackState.IDLE ||
-            currentInfo.state == PlaybackState.STOPPED ||
-            currentInfo.state == PlaybackState.COMPLETED ||
-            currentInfo.state == PlaybackState.ERROR) {
-            if (currentInfo.currentIndex >= 0 && currentInfo.currentIndex < playlist.size) {
-                startPlayback(currentInfo.currentIndex)
-            } else if (playlist.isNotEmpty()) {
-                startPlayback(0)
+    // ================================================================
+    //  进度追踪
+    // ================================================================
+
+    private fun startProgressTracking() {
+        stopProgressTracking()
+        progressJob = scope.launch {
+            while (_playbackInfo.value.state == PlaybackState.PLAYING) {
+                try {
+                    val pos = mediaPlayer?.currentPosition?.toLong()
+                    if (pos != null) {
+                        _playbackInfo.value = _playbackInfo.value.copy(currentPosition = pos)
+                    }
+                } catch (_: Exception) { }
+                delay(200)
             }
         }
     }
 
-    fun pause() {
-        if (_playbackInfo.value.state == PlaybackState.PLAYING) {
-            mediaPlayer?.pause()
-            _playbackInfo.value = _playbackInfo.value.copy(
-                state = PlaybackState.PAUSED
-            )
-            stopProgressTracking()
-        }
+    private fun stopProgressTracking() {
+        progressJob?.cancel()
+        progressJob = null
     }
 
-    fun togglePlayPause() {
-        if (_playbackInfo.value.state == PlaybackState.PLAYING) {
-            pause()
-        } else {
-            play()
-        }
-    }
+    // ================================================================
+    //  睡眠定时
+    // ================================================================
 
-    fun next() {
-        val currentInfo = _playbackInfo.value
-        val nextIndex = if (currentInfo.loopMode == LoopMode.RANDOM && playlist.isNotEmpty()) {
-            Random.nextInt(playlist.size)
-        } else {
-            (currentInfo.currentIndex + 1).coerceIn(0, playlist.size - 1)
-        }
-        if (nextIndex >= 0 && nextIndex < playlist.size) {
-            startPlayback(nextIndex)
-        }
-    }
-
-    fun previous() {
-        val currentInfo = _playbackInfo.value
-        val prevIndex = if (currentInfo.currentPosition > 3000) {
-            // 超过3秒则回到当前歌曲开头
-            currentInfo.currentIndex
-        } else {
-            (currentInfo.currentIndex - 1).coerceIn(0, playlist.size - 1)
-        }
-        if (prevIndex >= 0 && prevIndex < playlist.size) {
-            startPlayback(prevIndex)
-        }
-    }
-
-    fun seekTo(position: Long) {
-        mediaPlayer?.seekTo(position.toInt())
-        _playbackInfo.value = _playbackInfo.value.copy(
-            currentPosition = position
-        )
-    }
-
-    fun setLoopMode(mode: LoopMode) {
-        _playbackInfo.value = _playbackInfo.value.copy(
-            loopMode = mode
-        )
-    }
-
-    fun toggleLoopMode() {
-        val currentMode = _playbackInfo.value.loopMode
-        setLoopMode(currentMode.next())
-    }
-
-    // ---------- 睡眠定时 ----------
-
-    /**
-     * 启动睡眠定时：倒计时 [minutes] 分钟后自动暂停。
-     * 重复调用会覆盖之前的定时。
-     */
     fun startSleepTimer(minutes: Int) {
         cancelSleepTimer()
         sleepTimerJob = scope.launch {
@@ -375,34 +445,21 @@ class MusicPlayerManager private constructor(private val context: Context) {
         }
     }
 
-    /** 播完当前歌曲后暂停（下一次 onSongCompleted 触发时生效，无论循环模式）。 */
-    fun setSleepAfterCurrentSong() {
-        sleepAfterCurrent = true
-    }
-
+    fun setSleepAfterCurrentSong() { sleepAfterCurrent = true }
     fun cancelSleepTimer() {
         sleepTimerJob?.cancel()
         sleepTimerJob = null
         _sleepTimerRemaining.value = null
         sleepAfterCurrent = false
     }
-
-    /** 是否处于"播完当前后暂停"模式。 */
     fun isSleepAfterCurrent(): Boolean = sleepAfterCurrent
 
-    private fun stopInternal() {
-        stopProgressTracking()
-        try {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-        } catch (e: Exception) {
-            // ignore
-        }
-        mediaPlayer = null
-    }
+    // ================================================================
+    //  生命周期
+    // ================================================================
 
     fun stop() {
-        stopInternal()
+        releasePlayerSafely()
         abandonAudioFocus()
         _playbackInfo.value = _playbackInfo.value.copy(
             state = PlaybackState.STOPPED,
@@ -410,31 +467,8 @@ class MusicPlayerManager private constructor(private val context: Context) {
         )
     }
 
-    private fun startProgressTracking() {
-        stopProgressTracking()
-        progressJob = scope.launch {
-            while (_playbackInfo.value.state == PlaybackState.PLAYING) {
-                try {
-                    val position = mediaPlayer?.currentPosition?.toLong()
-                        ?: _playbackInfo.value.currentPosition
-                    _playbackInfo.value = _playbackInfo.value.copy(
-                        currentPosition = position
-                    )
-                } catch (e: Exception) {
-                    // ignore
-                }
-                delay(100)
-            }
-        }
-    }
-
-    private fun stopProgressTracking() {
-        progressJob?.cancel()
-        progressJob = null
-    }
-
     fun release() {
-        stopInternal()
+        releasePlayerSafely()
         abandonAudioFocus()
     }
 

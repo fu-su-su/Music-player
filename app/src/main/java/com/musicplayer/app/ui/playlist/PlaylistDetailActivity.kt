@@ -58,6 +58,7 @@ class PlaylistDetailActivity : AppCompatActivity() {
             adapter = this@PlaylistDetailActivity.adapter
         }
 
+        applyEdgeInsets()
         viewModel.setCurrentPlaylist(playlistId)
         viewModel.songsInPlaylist.observe(this) { songs ->
             currentSongs = songs
@@ -70,6 +71,28 @@ class PlaylistDetailActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.menu_playlist, menu)
         menu.findItem(R.id.action_add)?.title = getString(R.string.playlist_add_songs)
         return true
+    }
+
+    private fun applyEdgeInsets() {
+        try {
+            val tb = binding.toolbar
+            val ab = (56 * resources.displayMetrics.density).toInt()
+            val rv = binding.songRecyclerView
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+                try {
+                    val sb = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars()).top
+                    val nb = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars()).bottom
+                    tb.setPadding(tb.paddingStart, sb, tb.paddingEnd, tb.paddingBottom)
+                    val lp = tb.layoutParams
+                    lp.height = ab + sb
+                    tb.layoutParams = lp
+                    rv.setPadding(rv.paddingStart, rv.paddingTop, rv.paddingEnd, nb)
+                } catch (_: Throwable) {
+                }
+                insets
+            }
+        } catch (_: Throwable) {
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

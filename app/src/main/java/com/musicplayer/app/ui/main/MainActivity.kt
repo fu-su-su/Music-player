@@ -35,6 +35,8 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), SettingsActionCallback {
 
+    private var cachedNavBarHeight: Int = 0
+
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private lateinit var playerManager: MusicPlayerManager
@@ -157,10 +159,61 @@ class MainActivity : AppCompatActivity(), SettingsActionCallback {
 
         playerManager = MusicPlayerManager.getInstance(this)
 
+        applyEdgeInsets()
         setupToolbar()
         setupRecyclerView()
         setupMiniPlayer()
         observeData()
+    }
+
+    /**
+     * 使用 WindowInsetsCompat 监听器在布局完成后异步拿到状态栏/导航栏高度，
+     * 然后给 Toolbar 加顶部 padding、给 miniPlayer 加底部 margin。
+     * 这比 onCreate 时同步读取 insets 可靠（后者返回 0 → 底部面板被导航栏遮挡）。
+     */
+    private fun applyEdgeInsets() {
+        try {
+            val tb = binding.toolbar
+            val miniCard = binding.miniPlayer.root
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+                try {
+                    val sb = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars()).top
+                    val nb = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars()).bottom
+
+                    // Toolbar 顶部 padding = 状态栏高度
+                    val ab = (56 * resources.displayMetrics.density).toInt()
+                    tb.setPadding(tb.paddingStart, sb, tb.paddingEnd, tb.paddingBottom)
+                    val lp = tb.layoutParams
+                    lp.height = ab + sb
+                    tb.layoutParams = lp
+
+                    // RecyclerView 顶部 padding
+                    val dp8 = resources.getDimensionPixelSize(R.dimen.spacing_sm)
+                    binding.songRecyclerView.setPadding(
+                        binding.songRecyclerView.paddingStart,
+                        dp8 + sb,
+                        binding.songRecyclerView.paddingEnd,
+                        binding.songRecyclerView.paddingBottom
+                    )
+
+                    // miniPlayer 卡片 bottomMargin = 导航栏高度 + 额外间距（上移，避免遮挡）
+                    cachedNavBarHeight = nb
+                    val mp = miniCard.layoutParams as? androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams
+                    if (mp != null) {
+                        val extra = (12 * resources.displayMetrics.density).toInt()
+                        mp.bottomMargin = nb + extra
+                        miniCard.layoutParams = mp
+                    }
+
+                    // RecyclerView 底部 padding 跟 miniPlayer 显隐 + 导航栏
+                    applyBottomPaddingForList(binding.miniPlayer.root.visibility == android.view.View.VISIBLE)
+                } catch (_: Throwable) {
+                }
+                insets
+            }
+        } catch (_: Throwable) {
+            // 降级
+        }
     }
 
     private fun setupToolbar() {
@@ -339,7 +392,35 @@ class MainActivity : AppCompatActivity(), SettingsActionCallback {
         } else {
             binding.miniPlayer.root.visibility = View.GONE
         }
+        applyBottomPaddingForList(hasSong)
     }
+
+    /**
+     * 主页面列表底部 padding 根据 miniPlayer 显隐动态调整，
+     * 避免 miniPlayer 卡片下方露出主题渐变背景（突兀色块）。
+     */
+    private fun applyBottomPaddingForList(miniPlayerVisible: Boolean) {
+        try {
+            val resources = resources
+            val dp8 = resources.getDimensionPixelSize(R.dimen.spacing_sm)
+            val miniHeight = resources.getDimensionPixelSize(R.dimen.mini_player_height)
+            val navBar = cachedNavBarHeight
+            // miniPlayer 卡片自身有 margin spacing_sm × 4 边 + 卡片高度 + 导航栏
+            val total = if (miniPlayerVisible) miniHeight + dp8 * 4 + navBar else dp8 + navBar
+            val top = binding.songRecyclerView.paddingTop
+            binding.songRecyclerView.setPadding(
+                binding.songRecyclerView.paddingStart,
+                top,
+                binding.songRecyclerView.paddingEnd,
+                total
+            )
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun navigationBarHeight(): Int = ThemeManager.getNavigationBarHeight(this)
+
+    private fun rootWindowInsetsCompat(): androidx.core.view.WindowInsetsCompat? = null
 
     private fun showAssociateOptions(song: Song) {
         currentSelectedSong = song
@@ -571,8 +652,7 @@ class MainActivity : AppCompatActivity(), SettingsActionCallback {
                 true
             }
             R.id.action_search -> {
-                // 第一批：仅占位，搜索逻辑在第三批实现
-                Toast.makeText(this, R.string.search_feature_coming, Toast.LENGTH_SHORT).show()
+                // SearchView 会通过 onActionExpandListener 自动展开
                 true
             }
             else -> super.onOptionsItemSelected(item)
