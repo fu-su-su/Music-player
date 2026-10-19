@@ -9,14 +9,11 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * 智谱 AI API 调用封装（OpenAI 兼容格式，模型 GLM-4-Flash）。
- * 仅负责 HTTP 通信，不包含业务逻辑。
+ * OpenAI 兼容的对话补全接口封装（/chat/completions）。
+ * 仅负责 HTTP 通信，API Key / Base URL / 模型均由 [AgentConfig] 在调用时提供，
+ * 用户可使用任意 OpenAI 格式的官方、中转或自建服务。
  */
 object AgentService {
-
-    private const val API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-    private const val API_KEY = "b8a65ce92121403ea3aebea418449122.zalDKiU3X7TC3OSe"
-    private const val MODEL = "glm-4-flash"
 
     /** 模型返回的工具调用请求 */
     data class ToolCall(
@@ -34,28 +31,34 @@ object AgentService {
     /**
      * 调用对话补全接口。
      *
+     * @param apiKey 用户配置的 API Key
+     * @param baseUrl 用户配置的 Base URL（可为 .../v1 或完整 .../chat/completions）
+     * @param model 模型名称
      * @param messagesJson 完整对话历史（含 system/user/assistant/tool 消息）
      * @param toolsJson 工具定义列表（function calling）
      */
     suspend fun chatCompletion(
+        apiKey: String,
+        baseUrl: String,
+        model: String,
         messagesJson: JSONArray,
         toolsJson: JSONArray
     ): Response = withContext(Dispatchers.IO) {
         val body = JSONObject().apply {
-            put("model", MODEL)
+            put("model", model)
             put("messages", messagesJson)
             put("tools", toolsJson)
             put("temperature", 0.1)
         }
 
-        val conn = URL(API_URL).openConnection() as HttpURLConnection
+        val conn = URL(buildEndpoint(baseUrl)).openConnection() as HttpURLConnection
         try {
             conn.requestMethod = "POST"
             conn.connectTimeout = 15000
             conn.readTimeout = 60000
             conn.doOutput = true
             conn.setRequestProperty("Content-Type", "application/json")
-            conn.setRequestProperty("Authorization", "Bearer $API_KEY")
+            conn.setRequestProperty("Authorization", "Bearer $apiKey")
             conn.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
 
             val code = conn.responseCode
@@ -69,6 +72,26 @@ object AgentService {
             parseResponse(text)
         } finally {
             conn.disconnect()
+        }
+    }
+
+    /**
+     * 将用户填写的 Base URL 归一化为完整的 chat/completions 端点。
+     * 兼容写法：
+     * - https://api.openai.com/v1
+     * - https://api.openai.com/v1/
+     * - https://host/v1/chat/completions（已带端点，原样使用）
+     */
+    private fun buildEndpoint(baseUrl: String): String {
+        val trimmed = baseUrl.trim().trimEnd('/')
+        require(trimmed.isNotEmpty()) { "Base URL 不能为空" }
+        require(trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            "Base URL 需以 http:// 或 https:// 开头"
+        }
+        return if (trimmed.endsWith("/chat/completions")) {
+            trimmed
+        } else {
+            "$trimmed/chat/completions"
         }
     }
 

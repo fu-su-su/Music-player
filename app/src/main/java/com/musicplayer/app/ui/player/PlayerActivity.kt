@@ -4,7 +4,9 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
@@ -12,6 +14,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -31,6 +34,7 @@ import com.musicplayer.app.util.LyricParser
 import com.musicplayer.app.util.LyricLine
 import com.musicplayer.app.util.ThemeManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -46,6 +50,23 @@ class PlayerActivity : AppCompatActivity() {
     private var isUserSeeking = false
     private var loadedSongId: Long? = null
     private var isPureMode = false  // 纯净模式：控件隐藏 + 沉浸式全屏
+
+    /** 封面/歌词加载任务：切歌时取消上一首未完成的加载，防止并发解码大图 OOM */
+    private var coverLoadJob: Job? = null
+    private var lyricLoadJob: Job? = null
+
+    /** 切歌按钮防抖间隔：间隔内忽略重复点击，降低快速连切时的资源压力 */
+    private val switchClickDebounceMs = 300L
+
+    // ---------- 拖词选时播放 ----------
+    /** 是否正在拖动歌词选择播放位置（拖动期间暂停歌词自动跟随） */
+    private var isLyricDragging = false
+    private var lyricDragDownY = 0f
+    private var lyricDragLastY = 0f
+    private var lyricDragIndex = -1
+    private val lyricTouchSlop: Int by lazy {
+        ViewConfiguration.get(this).scaledTouchSlop
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +104,21 @@ class PlayerActivity : AppCompatActivity() {
             layoutManager = lyricLayoutManager
             adapter = lyricAdapter
             setHasFixedSize(false)
+            // 上下渐隐/渐显由 FadingLyricRecyclerView 自绘遮罩保证对称
+            // 关闭条目动画：歌词高亮/切歌时不需要插入与 change 动画。
+            // 必须置空，否则 submitList 与平滑滚动并发时 ItemAnimator
+            // 可能 reattach 未 detach 的 ViewHolder 导致崩溃。
+            itemAnimator = null
+        }
+
+        // 拖词选时：上下拖动歌词 → 两侧播放线出现，松手从选中句播放
+        setupLyricDragSeek()
+        // 让任意一句歌词（包括第一句和最后一句）都能滚动到垂直中线被选中：
+        // 上下各留出半个视图高度的空白，配合 clipToPadding=false，首尾句也能到达
+        // 播放线所在的中线位置；否则列表滚到尽头时最后几行永远够不到中线。
+        binding.lyricRecyclerView.doOnLayout { rv ->
+            val half = rv.height / 2
+            rv.setPadding(0, half, 0, half)
         }
 
         // 进度条
@@ -107,8 +143,17 @@ class PlayerActivity : AppCompatActivity() {
 
         // 控制按钮
         binding.playPauseButton.setOnClickListener { playerManager.togglePlayPause() }
-        binding.previousButton.setOnClickListener { playerManager.previous() }
-        binding.nextButton.setOnClickListener { playerManager.next() }
+        // 切歌按钮：临时禁用做防抖，避免快速连点导致短时间内大量重建播放器/加载封面
+        binding.previousButton.setOnClickListener { button ->
+            button.isEnabled = false
+            playerManager.previous()
+            button.postDelayed({ button.isEnabled = true }, switchClickDebounceMs)
+        }
+        binding.nextButton.setOnClickListener { button ->
+            button.isEnabled = false
+            playerManager.next()
+            button.postDelayed({ button.isEnabled = true }, switchClickDebounceMs)
+        }
         binding.loopModeButton.setOnClickListener { playerManager.toggleLoopMode() }
         binding.songDetailsButton.setOnClickListener { showSongDetails() }
         // 纯净模式：⌄ 收起控件 → 沉浸式全屏 + 右下角上箭头还原
@@ -177,22 +222,42 @@ class PlayerActivity : AppCompatActivity() {
 
         val song = playerManager.getCurrentSong() ?: return
 
-        // 加载背景/封面（子线程读取文件，主线程更新UI）
+        // 取消上一首未完成的封面/歌词加载，并立即释放旧封面位图，
+        // 避免快速切歌时多张全尺寸位图同时驻留内存导致 OOM 闪退
+        coverLoadJob?.cancel()
+        lyricLoadJob?.cancel()
+        Glide.with(this).clear(binding.coverImageView)
+
+        // 复位拖词选时状态，防止上一首的播放线/选中态残留
+        isLyricDragging = false
+        lyricDragIndex = -1
+        hideLyricDragIndicator()
+
+        // 封面按屏幕宽度采样解码（centerCrop 铺满宽度即可），不再加载原始大图
+        val targetSize = resources.displayMetrics.widthPixels.coerceAtLeast(1)
+
+        // 加载背景/封面（子线程采样读取文件，主线程更新UI）
         // 优先级：该歌曲的自定义背景 > 封面文件 > 内嵌封面
-        lifecycleScope.launch {
+        coverLoadJob = lifecycleScope.launch {
             val bitmap: Bitmap? = withContext(Dispatchers.IO) {
                 try {
                     when {
                         song.customBackgroundPath != null ->
-                            ImageUtils.loadBitmapFromPath(song.customBackgroundPath)
+                            ImageUtils.loadBitmapFromPath(
+                                song.customBackgroundPath, targetSize, targetSize
+                            )
                         song.coverPath != null ->
-                            ImageUtils.loadBitmapFromPath(song.coverPath)
+                            ImageUtils.loadBitmapFromPath(
+                                song.coverPath, targetSize, targetSize
+                            )
                         else -> {
                             val bytes = AudioUtils.getEmbeddedCover(song.path)
-                            ImageUtils.loadBitmapFromBytes(bytes)
+                            ImageUtils.loadBitmapFromBytes(
+                                bytes, targetSize, targetSize
+                            )
                         }
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     null
                 }
             }
@@ -212,12 +277,12 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         // 加载歌词（子线程解析LRC文件）
-        lifecycleScope.launch {
+        lyricLoadJob = lifecycleScope.launch {
             lyrics = withContext(Dispatchers.IO) {
                 try {
                     val lyricPath = song.lyricPath
                     if (lyricPath != null) LyricParser.parseLyricFile(lyricPath) else emptyList()
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     emptyList()
                 }
             }
@@ -232,9 +297,12 @@ class PlayerActivity : AppCompatActivity() {
                 lyricAdapter.updateHighlight(-1)
                 // 先停止任何正在进行的滚动
                 binding.lyricRecyclerView.stopScroll()
+                // 记录本次提交归属：回调执行时若已切到别的歌或页面已销毁则丢弃，
+                // 防止旧歌词的延迟回调拿着失效索引刷新新列表
+                val targetSongId = songId
                 lyricAdapter.submitList(lyrics) {
-                    // submitList 完成回调：在下一帧恢复高亮
                     binding.lyricRecyclerView.post {
+                        if (isFinishing || isDestroyed || loadedSongId != targetSongId) return@post
                         lyricAdapter.updateHighlight(lastHighlightIndex)
                     }
                 }
@@ -245,6 +313,8 @@ class PlayerActivity : AppCompatActivity() {
     private fun updateLyricHighlight(currentPosition: Long) {
         if (lyrics.isEmpty()) return
         if (binding.lyricRecyclerView.visibility != View.VISIBLE) return
+        // 用户正在拖动歌词选时：不自动跟随播放进度高亮
+        if (isLyricDragging) return
 
         val index = LyricParser.findCurrentLineIndex(lyrics, currentPosition)
         if (index != -1 && index != lastHighlightIndex) {
@@ -261,12 +331,14 @@ class PlayerActivity : AppCompatActivity() {
      * 平滑滚动到指定位置并居中显示。
      */
     private fun smoothScrollToCenter(position: Int) {
-        if (position < 0) return
+        if (position < 0 || isFinishing || isDestroyed) return
         // 防止 RecyclerView 正在布局计算时启动新的滚动 → attach 竞态崩溃
         if (binding.lyricRecyclerView.isComputingLayout) {
             binding.lyricRecyclerView.post { smoothScrollToCenter(position) }
             return
         }
+        // 索引已失效（快速切歌后歌词列表已更换）→ 放弃本次滚动
+        if (position >= lyricAdapter.itemCount) return
         try {
             val smoothScroller = object : LinearSmoothScroller(this) {
                 override fun getVerticalSnapPreference(): Int = SNAP_TO_ANY
@@ -285,6 +357,121 @@ class PlayerActivity : AppCompatActivity() {
             lyricLayoutManager.startSmoothScroll(smoothScroller)
         } catch (_: Exception) {
             // RecyclerView 状态不合法时忽略
+        }
+    }
+
+    // ================================================================
+    //  拖词选时播放
+    // ================================================================
+
+    /**
+     * 在歌词区上下拖动：歌词随手势滚动，两侧播放线出现，垂直居中的歌词句
+     * 被选中并高亮、左侧显示该句时间；松手后从该句时间点开始播放，
+     * 选中句平滑居中，随后恢复歌词自动跟随。
+     */
+    private fun setupLyricDragSeek() {
+        binding.lyricRecyclerView.setOnTouchListener { _, event ->
+            if (lyrics.isEmpty()) return@setOnTouchListener false
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    lyricDragDownY = event.rawY
+                    lyricDragLastY = event.rawY
+                    // 返回 true 才能持续接收后续 MOVE/UP 事件
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (!isLyricDragging &&
+                        kotlin.math.abs(event.rawY - lyricDragDownY) > lyricTouchSlop
+                    ) {
+                        isLyricDragging = true
+                        binding.lyricRecyclerView.stopScroll()
+                        showLyricDragIndicator()
+                    }
+                    if (isLyricDragging) {
+                        // 手指下移 → 歌词内容向下滚动（查看前面的歌词）
+                        val dy = event.rawY - lyricDragLastY
+                        lyricDragLastY = event.rawY
+                        try {
+                            binding.lyricRecyclerView.scrollBy(0, (-dy).toInt())
+                        } catch (_: Exception) { }
+                        updateLyricDragSelection()
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (isLyricDragging) finishLyricDrag()
+                    true
+                }
+                else -> true
+            }
+        }
+    }
+
+    /** 显示两侧播放线与时间标签。 */
+    private fun showLyricDragIndicator() {
+        binding.lyricDragLineLeft.visibility = View.VISIBLE
+        binding.lyricDragLineRight.visibility = View.VISIBLE
+        binding.lyricDragTimeText.visibility = View.VISIBLE
+    }
+
+    /** 隐藏两侧播放线与时间标签。 */
+    private fun hideLyricDragIndicator() {
+        binding.lyricDragLineLeft.visibility = View.GONE
+        binding.lyricDragLineRight.visibility = View.GONE
+        binding.lyricDragTimeText.visibility = View.GONE
+    }
+
+    /**
+     * 根据当前滚动位置，找出最靠近歌词区垂直中线的歌词句并高亮，
+     * 同时把该句时间显示在左侧时间标签上。
+     */
+    private fun updateLyricDragSelection() {
+        val rv = binding.lyricRecyclerView
+        if (rv.childCount == 0) return
+        val centerY = rv.height / 2
+        var bestChild: View? = null
+        var bestDistance = Int.MAX_VALUE
+        for (i in 0 until rv.childCount) {
+            val child = rv.getChildAt(i) ?: continue
+            val childCenter = (child.top + child.bottom) / 2
+            val distance = kotlin.math.abs(childCenter - centerY)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                bestChild = child
+            }
+        }
+        val child = bestChild ?: return
+        val index = try {
+            lyricLayoutManager.getPosition(child)
+        } catch (_: Exception) {
+            -1
+        }
+        if (index == lyricDragIndex || index !in lyrics.indices) return
+        lyricDragIndex = index
+        lastHighlightIndex = index
+        lyricAdapter.updateHighlight(index)
+        binding.lyricDragTimeText.text = AudioUtils.formatDuration(lyrics[index].time)
+    }
+
+    /**
+     * 松手：从选中句的时间点开始（或继续）播放，隐藏播放线，选中句居中，
+     * 随后恢复播放进度自动跟随。
+     */
+    private fun finishLyricDrag() {
+        val index = lyricDragIndex
+        isLyricDragging = false
+        lyricDragIndex = -1
+        hideLyricDragIndicator()
+
+        if (index in lyrics.indices) {
+            val targetTime = lyrics[index].time
+            playerManager.seekTo(targetTime)
+            // 暂停/停止状态下也应从该句开始播放
+            if (playerManager.playbackInfo.value.state != PlaybackState.PLAYING) {
+                playerManager.play()
+            }
+            // 等本次滚动落稳后再把选中句平滑居中
+            binding.lyricRecyclerView.post { smoothScrollToCenter(index) }
         }
     }
 

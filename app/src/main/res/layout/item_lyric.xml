@@ -9,6 +9,6 @@
     android:paddingStart="@dimen/spacing_md"
     android:paddingEnd="@dimen/spacing_md"
     android:textColor="@color/lyric_normal"
-    android:textSize="@dimen/text_normal"
+    android:textSize="13sp"
     android:maxLines="2"
     android:ellipsize="end" />

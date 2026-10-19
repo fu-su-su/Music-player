@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Agent 配置弹窗输入框：固定浅灰底（脱离日夜模式联动），配深色文字保证任何主题下可读 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FFF1F3F4" />
+    <corners android:radius="12dp" />
+</shape>

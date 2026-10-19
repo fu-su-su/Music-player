@@ -27,6 +27,9 @@ class LyricAdapter(
         /** 高亮歌词颜色：纯白 */
         private const val COLOR_HIGHLIGHT = 0xFFFFFFFF.toInt()
 
+        /** 高亮局部刷新 payload 标记 */
+        private const val PAYLOAD_HIGHLIGHT = "payload_highlight"
+
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<LyricLine>() {
             override fun areItemsTheSame(oldItem: LyricLine, newItem: LyricLine) =
                 oldItem.time == newItem.time
@@ -38,8 +41,16 @@ class LyricAdapter(
     fun updateHighlight(index: Int) {
         val oldIndex = currentHighlightIndex
         currentHighlightIndex = index
-        if (oldIndex != -1) notifyItemChanged(oldIndex)
-        if (index != -1 && index != oldIndex) notifyItemChanged(index)
+        // 带 payload 刷新：RecyclerView 会复用同一个 ViewHolder，不产生 change 动画，
+        // 从根本上规避快速切歌时 attach/detach 竞态导致的
+        // "Called attach on a child which is not detached" 崩溃。
+        // 同时校验 itemCount，防止切歌后旧回调拿着失效索引刷新新列表而越界。
+        if (oldIndex != -1 && oldIndex in 0 until itemCount) {
+            notifyItemChanged(oldIndex, PAYLOAD_HIGHLIGHT)
+        }
+        if (index != -1 && index != oldIndex && index in 0 until itemCount) {
+            notifyItemChanged(index, PAYLOAD_HIGHLIGHT)
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LyricViewHolder {
@@ -50,15 +61,31 @@ class LyricAdapter(
     }
 
     override fun onBindViewHolder(holder: LyricViewHolder, position: Int) {
-        holder.bind(getItem(position), position == currentHighlightIndex)
+        holder.bindContent(getItem(position))
+        holder.applyHighlightStyle(position == currentHighlightIndex)
+    }
+
+    /** payload 局部绑定：仅更新高亮样式，不重新设置文本。 */
+    override fun onBindViewHolder(
+        holder: LyricViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if (payloads.contains(PAYLOAD_HIGHLIGHT)) {
+            holder.applyHighlightStyle(position == currentHighlightIndex)
+        } else {
+            super.onBindViewHolder(holder, position, payloads)
+        }
     }
 
     inner class LyricViewHolder(private val binding: ItemLyricBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(line: LyricLine, isHighlighted: Boolean) {
+        fun bindContent(line: LyricLine) {
             binding.lyricTextView.text = line.text.ifEmpty { "♪" }
+        }
 
+        fun applyHighlightStyle(isHighlighted: Boolean) {
             // 纯文本高亮：仅通过文字本身的样式区分，无 alpha 动画；字号跟随用户设置
             if (isHighlighted) {
                 binding.lyricTextView.setTextColor(COLOR_HIGHLIGHT)  // 纯白

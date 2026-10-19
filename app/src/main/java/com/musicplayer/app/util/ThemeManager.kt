@@ -75,9 +75,9 @@ object ThemeManager {
      * 歌词字号三档：normal 非高亮行、highlight 高亮行（sp）。
      */
     enum class LyricFontSize(val key: String, val normalSp: Float, val highlightSp: Float) {
-        SMALL("small", 13f, 16f),
-        MEDIUM("medium", 15f, 18f),
-        LARGE("large", 17f, 20f);
+        SMALL("small", 11f, 13f),
+        MEDIUM("medium", 13f, 15f),
+        LARGE("large", 15f, 17f);
 
         companion object {
             fun fromKey(key: String?): LyricFontSize =

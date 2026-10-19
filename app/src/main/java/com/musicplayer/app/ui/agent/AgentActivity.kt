@@ -1,13 +1,19 @@
 package com.musicplayer.app.ui.agent
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.musicplayer.app.R
 import com.musicplayer.app.databinding.ActivityAgentBinding
+import com.musicplayer.app.databinding.DialogAgentConfigBinding
+import com.musicplayer.app.util.AgentConfig
 import com.musicplayer.app.util.AgentService
 import com.musicplayer.app.util.AgentTools
 import com.musicplayer.app.util.ThemeManager
@@ -17,8 +23,9 @@ import org.json.JSONObject
 import java.io.IOException
 
 /**
- * AI 助手对话页：纯文字交互，通过云端 GLM-4-Flash + Function Calling
- * 执行音乐播放器白名单内的操作。无关请求由模型按固定话术拒绝。
+ * AI 助手对话页：纯文字交互，通过用户自行配置的 OpenAI 兼容接口 +
+ * Function Calling 执行音乐播放器白名单内的操作。
+ * 无关请求由模型按固定话术拒绝。
  */
 class AgentActivity : AppCompatActivity() {
 
@@ -58,6 +65,68 @@ class AgentActivity : AppCompatActivity() {
             setDisplayHomeAsUpEnabled(true)
         }
         binding.toolbar.setNavigationOnClickListener { finish() }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_agent, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.action_agent_config) {
+            showConfigDialog()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    /**
+     * API 配置弹窗：用户自行填写 API Key / Base URL / 模型名称，
+     * 保存在本机 SharedPreferences，下次调用立即生效。
+     */
+    private fun showConfigDialog() {
+        val dialogBinding = DialogAgentConfigBinding.inflate(layoutInflater)
+        dialogBinding.apiKeyEditText.setText(AgentConfig.getApiKey(applicationContext))
+        dialogBinding.baseUrlEditText.setText(AgentConfig.getBaseUrl(applicationContext))
+        dialogBinding.modelEditText.setText(AgentConfig.getModel(applicationContext))
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.agent_config_title)
+            .setView(dialogBinding.root)
+            .setPositiveButton(R.string.agent_config_save, null)
+            .setNegativeButton(R.string.agent_config_cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            // 手动接管保存按钮：校验不通过时不关闭弹窗
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val apiKey = dialogBinding.apiKeyEditText.text?.toString()?.trim().orEmpty()
+                val baseUrl = dialogBinding.baseUrlEditText.text?.toString()?.trim().orEmpty()
+                val model = dialogBinding.modelEditText.text?.toString()?.trim().orEmpty()
+
+                when {
+                    apiKey.isEmpty() ->
+                        dialogBinding.apiKeyEditText.error =
+                            getString(R.string.agent_config_api_key)
+                    model.isEmpty() ->
+                        dialogBinding.modelEditText.error =
+                            getString(R.string.agent_config_model)
+                    baseUrl.isNotEmpty() &&
+                        !baseUrl.startsWith("http://") && !baseUrl.startsWith("https://") ->
+                        dialogBinding.baseUrlEditText.error = "http(s)://"
+                    else -> {
+                        AgentConfig.save(applicationContext, apiKey, baseUrl, model)
+                        Toast.makeText(
+                            this,
+                            R.string.agent_config_saved,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        dialog.dismiss()
+                    }
+                }
+            }
+        }
+        dialog.show()
     }
 
     private fun setupChat() {
@@ -107,6 +176,12 @@ class AgentActivity : AppCompatActivity() {
     private fun sendCurrentInput() {
         val text = binding.inputEditText.text?.toString()?.trim() ?: ""
         if (text.isEmpty() || isBusy) return
+        // 未配置 API Key / 模型时引导用户先填写
+        if (!AgentConfig.isConfigured(applicationContext)) {
+            Toast.makeText(this, R.string.agent_config_missing, Toast.LENGTH_LONG).show()
+            showConfigDialog()
+            return
+        }
         binding.inputEditText.setText("")
         sendMessage(text)
     }
@@ -149,7 +224,13 @@ class AgentActivity : AppCompatActivity() {
         )
 
         repeat(3) {
-            val response = AgentService.chatCompletion(historyJson, tools.buildToolsJson())
+            val response = AgentService.chatCompletion(
+                apiKey = AgentConfig.getApiKey(applicationContext),
+                baseUrl = AgentConfig.getBaseUrl(applicationContext),
+                model = AgentConfig.getModel(applicationContext),
+                messagesJson = historyJson,
+                toolsJson = tools.buildToolsJson()
+            )
 
             if (response.toolCalls.isEmpty()) {
                 val content = response.content ?: AgentTools.REJECT_MESSAGE

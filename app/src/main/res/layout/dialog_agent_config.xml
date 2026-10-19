@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Agent 接口配置弹窗。
+    注意：本弹窗全部颜色写死（浅底深字），不引用 values-night 资源——
+    输入框为浅色底，若文字色随夜间模式翻成白色会不可见。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="20dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- API Key -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/agent_config_api_key"
+            android:textColor="#FF1B1B1B"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/apiKeyEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_agent_config_input"
+            android:hint="@string/agent_config_api_key_hint"
+            android:inputType="textPassword"
+            android:maxLines="2"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="10dp"
+            android:textColor="#FF1B1B1B"
+            android:textColorHint="#FF757575"
+            android:textSize="14sp" />
+
+        <!-- Base URL -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/agent_config_base_url"
+            android:textColor="#FF1B1B1B"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/baseUrlEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_agent_config_input"
+            android:hint="@string/agent_config_base_url_hint"
+            android:inputType="textUri"
+            android:maxLines="2"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="10dp"
+            android:textColor="#FF1B1B1B"
+            android:textColorHint="#FF757575"
+            android:textSize="14sp" />
+
+        <!-- 模型名称 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/agent_config_model"
+            android:textColor="#FF1B1B1B"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/modelEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_agent_config_input"
+            android:hint="@string/agent_config_model_hint"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="10dp"
+            android:textColor="#FF1B1B1B"
+            android:textColorHint="#FF757575"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/agent_config_footnote"
+            android:textColor="#FF757575"
+            android:textSize="11sp" />
+    </LinearLayout>
+</ScrollView>

@@ -70,22 +70,62 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="2" />
+            android:layout_weight="1" />
 
-        <!-- 6-8：歌词区 -->
+        <!-- 6-9：歌词区（加高，保证上下有足够内容滚出边缘以呈现渐隐） -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="2">
+            android:layout_weight="3">
 
-            <androidx.recyclerview.widget.RecyclerView
+            <com.musicplayer.app.ui.player.FadingLyricRecyclerView
                 android:id="@+id/lyricRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:overScrollMode="never"
-                android:paddingTop="16dp"
-                android:paddingBottom="16dp" />
+                android:paddingTop="24dp"
+                android:paddingBottom="24dp" />
+
+            <!-- 拖词选时：左侧横线（拖动歌词时出现，对齐选中行高度） -->
+            <View
+                android:id="@+id/lyricDragLineLeft"
+                android:layout_width="28dp"
+                android:layout_height="2dp"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="20dp"
+                android:background="#FFFFFFFF"
+                android:visibility="gone" />
+
+            <!-- 拖词选时：右侧横线 -->
+            <View
+                android:id="@+id/lyricDragLineRight"
+                android:layout_width="28dp"
+                android:layout_height="2dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="20dp"
+                android:background="#FFFFFFFF"
+                android:visibility="gone" />
+
+            <!-- 拖词选时：选中句的时间标签（位于左侧横线上方） -->
+            <TextView
+                android:id="@+id/lyricDragTimeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="20dp"
+                android:layout_marginBottom="20dp"
+                android:paddingStart="8dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="3dp"
+                android:shadowColor="#99000000"
+                android:shadowDy="1"
+                android:shadowRadius="3"
+                android:text="0:00"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp"
+                android:visibility="gone" />
         </FrameLayout>
 
         <!-- 8-9：底部空白区 -->
@@ -93,21 +133,21 @@
             android:id="@+id/bottomSpacerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="0.6" />
 
         <!-- 9-10：底部控制区（纯黑色） -->
         <LinearLayout
             android:id="@+id/controlsPanel"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_weight="1.4"
             android:background="#FF000000"
             android:gravity="center"
             android:orientation="vertical"
             android:paddingStart="@dimen/spacing_md"
             android:paddingEnd="@dimen/spacing_md"
-            android:paddingTop="@dimen/spacing_xs"
-            android:paddingBottom="@dimen/spacing_xs">
+            android:paddingTop="@dimen/spacing_sm"
+            android:paddingBottom="@dimen/spacing_sm">
 
             <!-- 进度条行：时间 + SeekBar + 收起按钮（右上角） -->
             <LinearLayout
